@@ -2,7 +2,7 @@
 
 Параметры: $ARGUMENTS
 Ожидаемый формат: `<шаблон> <имя>` — например: `react-vite auth-form`
-Доступные шаблоны: react-vite, vue-vite, custom-build
+Доступные шаблоны: react-vite, vue-vite, custom-build, react-full, vue-full
 
 Шаги:
 
@@ -13,3 +13,7 @@
    `cd experiments/<имя> && pnpm add <зависимости>`
 5. Открой `experiments/<имя>/README.md` и заполни секцию "Цель" на основе имени и контекста разговора.
 6. Выведи итог: что создано, как запустить (`pnpm dev`), как запустить тесты (`pnpm test`).
+7. Если шаблон `react-full` или `vue-full` — дополнительно укажи пользователю:
+   - `pnpm storybook` — запустить Storybook на порту 6006
+   - Компоненты в `src/components/` — это отправная точка для экспериментов
+   - Для добавления visual тестов: `/experiment:add-visual-tests <имя>`

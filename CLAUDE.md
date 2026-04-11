@@ -16,7 +16,7 @@ pnpm run create -- --template <шаблон> --name <имя>
 pnpm install   # обязательно после создания — добавляет новый workspace
 ```
 
-Доступные шаблоны: `react-vite`, `vue-vite`, `custom-build`
+Доступные шаблоны: `react-vite`, `vue-vite`, `custom-build`, `react-full`, `vue-full`
 
 ## Команды
 

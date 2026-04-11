@@ -207,7 +207,7 @@ pnpm run clean --full                # Удалить корневой node_modu
     "clean": "tsx scripts/clean.ts",
     "lint": "oxlint .",
     "format": "prettier --write .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
   },
   "devDependencies": {
     "typescript": "^5.x",
@@ -215,8 +215,8 @@ pnpm run clean --full                # Удалить корневой node_modu
     "prettier": "^3.x",
     "tsx": "^4.x",
     "husky": "^9.x",
-    "lint-staged": "^15.x"
-  }
+    "lint-staged": "^15.x",
+  },
 }
 ```
 
@@ -224,8 +224,8 @@ pnpm run clean --full                # Удалить корневой node_modu
 
 ```yaml
 packages:
-  - "experiments/*"
-  - "shared"
+  - 'experiments/*'
+  - 'shared'
 ```
 
 Шаблоны НЕ включены в воркспейсы — они не устанавливаются, а только копируются.
@@ -248,8 +248,8 @@ packages:
     "noUnusedParameters": true,
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true
-  }
+    "sourceMap": true,
+  },
 }
 ```
 

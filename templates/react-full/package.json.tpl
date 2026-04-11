@@ -18,7 +18,9 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "tailwind-merge": "^2.0.0",
-    "lucide-react": "^0.400.0"
+    "lucide-react": "^0.400.0",
+    "@sandbox/shared": "workspace:*",
+    "axios": "^1.7.0"
   },
   "devDependencies": {
     "@types/react": "^19.1.0",
@@ -32,7 +34,11 @@
     "@storybook/test": "^8.0.0",
     "typescript": "^5.8.3",
     "vite": "^6.3.2",
-    "vitest": "^3.0.0"
+    "vitest": "^3.0.0",
+    "msw": "^2.7.0",
+    "@testing-library/react": "^16.0.0",
+    "@testing-library/jest-dom": "^6.0.0",
+    "@testing-library/user-event": "^14.0.0"
   },
   "sandbox": {
     "template": "react-full",

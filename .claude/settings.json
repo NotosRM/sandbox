@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm run:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm test:run)",
+      "Bash(node -e \"const s = '{{ name }}'; console.log\\(s.includes\\('{{name}}'\\)\\);\")",
+      "Bash(git checkout:*)"
+    ]
+  }
+}

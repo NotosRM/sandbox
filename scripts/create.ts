@@ -1,4 +1,12 @@
-import { cpSync, existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 
@@ -9,6 +17,9 @@ const TEMPLATES_DIR = join(ROOT, 'templates');
 const EXPERIMENTS_DIR = join(ROOT, 'experiments');
 
 const TEXT_EXTENSIONS = ['.ts', '.tsx', '.vue', '.html', '.md'];
+
+/** Templates that include MSW and need mockServiceWorker.js in public/ */
+const MSW_TEMPLATES = new Set(['react-full', 'vue-full']);
 
 function processDir(dir: string, name: string): void {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -83,7 +94,21 @@ function main(): void {
   // Replace {{name}} in all other text files
   processDir(experimentDir, name);
 
-  // 4. Create README.md
+  // 4. Copy mockServiceWorker.js for MSW-enabled templates
+  if (MSW_TEMPLATES.has(template)) {
+    const mswWorkerSrc = join(ROOT, 'node_modules', 'msw', 'lib', 'mockServiceWorker.js');
+    if (existsSync(mswWorkerSrc)) {
+      const publicDir = join(experimentDir, 'public');
+      mkdirSync(publicDir, { recursive: true });
+      cpSync(mswWorkerSrc, join(publicDir, 'mockServiceWorker.js'));
+    } else {
+      console.warn(
+        '  ⚠ msw not found in node_modules — run `npx msw init public/` inside the experiment'
+      );
+    }
+  }
+
+  // 5. Create README.md
   const readme = `# ${name}
 
 **Шаблон:** ${template}
@@ -106,7 +131,14 @@ function main(): void {
   console.log(`\n✓ Experiment "${name}" created from template "${template}"\n`);
   console.log('Next steps:');
   console.log('  1. Run pnpm install in the repo root (to pick up the new workspace)');
-  console.log(`  2. cd experiments/${name} && pnpm dev\n`);
+  if (MSW_TEMPLATES.has(template)) {
+    console.log(`  2. cd experiments/${name} && pnpm dev`);
+    console.log(
+      '     MSW is active in DEV — check the browser console for "[MSW] Mocking enabled"\n'
+    );
+  } else {
+    console.log(`  2. cd experiments/${name} && pnpm dev\n`);
+  }
 }
 
 main();

@@ -13,7 +13,9 @@
     "test:run": "vitest run"
   },
   "dependencies": {
-    "vue": "^3.5.0"
+    "vue": "^3.5.0",
+    "@sandbox/shared": "workspace:*",
+    "axios": "^1.7.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.0",
@@ -25,7 +27,12 @@
     "@storybook/test": "^8.0.0",
     "typescript": "^5.8.3",
     "vite": "^6.3.2",
-    "vitest": "^3.0.0"
+    "vitest": "^3.0.0",
+    "msw": "^2.7.0",
+    "@vue/test-utils": "^2.0.0",
+    "@testing-library/vue": "^8.0.0",
+    "@testing-library/jest-dom": "^6.0.0",
+    "@testing-library/user-event": "^14.0.0"
   },
   "sandbox": {
     "template": "vue-full",

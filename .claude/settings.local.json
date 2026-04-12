@@ -1,5 +1,9 @@
 {
   "permissions": {
-    "allow": ["Bash(rtk ls:*)", "Bash(ls D:/Projects/sandbox-notosrm/tsconfig*.json)"]
+    "allow": [
+      "Bash(rtk ls:*)",
+      "Bash(ls D:/Projects/sandbox-notosrm/tsconfig*.json)",
+      "Bash(node --input-type=module:*)"
+    ]
   }
 }

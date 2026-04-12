@@ -33,10 +33,8 @@ describe('handlers — success mode', () => {
 
 describe('handlers — error mode', () => {
   it('returns 500 for products endpoint', async () => {
-    const errServer = createServer(...createHandlers('error'));
-    errServer.listen({ onUnhandledRequest: 'bypass' });
+    server.use(...createHandlers('error'));
     const res = await fetch('https://dummyjson.com/products?limit=12&skip=0');
     expect(res.status).toBe(500);
-    errServer.close();
   });
 });

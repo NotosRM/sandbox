@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import App from './App';
+import './globals.css';
+import App from './App.tsx';
 
 if (import.meta.env.DEV) {
   const { setupMocks } = await import('@sandbox/shared/msw');

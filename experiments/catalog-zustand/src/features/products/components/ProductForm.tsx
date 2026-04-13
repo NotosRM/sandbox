@@ -25,7 +25,7 @@ export function ProductForm() {
   const { isProductFormOpen, editingProductId, closeForm } = useUIStore();
   const isEditMode = editingProductId !== null;
 
-  const { data: existingProduct } = useProduct(editingProductId ?? 0);
+  const { data: existingProduct } = useProduct(isEditMode ? editingProductId! : 0);
   const createMutation = useCreateProduct();
   const updateMutation = useUpdateProduct();
 
@@ -48,6 +48,7 @@ export function ProductForm() {
 
   // Prefill form when editing
   useEffect(() => {
+    if (!isProductFormOpen) return;
     if (isEditMode && existingProduct) {
       reset({
         title: existingProduct.title,
@@ -57,7 +58,7 @@ export function ProductForm() {
         brand: existingProduct.brand,
         thumbnail: existingProduct.thumbnail,
       });
-    } else {
+    } else if (!isEditMode) {
       reset({
         title: '',
         description: '',
@@ -67,15 +68,19 @@ export function ProductForm() {
         thumbnail: '',
       });
     }
-  }, [isEditMode, existingProduct, reset]);
+  }, [isProductFormOpen, isEditMode, existingProduct, reset]);
 
   async function onSubmit(data: FormData) {
-    if (isEditMode && editingProductId !== null) {
-      await updateMutation.mutateAsync({ id: editingProductId, data });
-    } else {
-      await createMutation.mutateAsync(data as Parameters<typeof createMutation.mutateAsync>[0]);
+    try {
+      if (isEditMode && editingProductId !== null) {
+        await updateMutation.mutateAsync({ id: editingProductId, data });
+      } else {
+        await createMutation.mutateAsync({ ...data, discountPercentage: 0 });
+      }
+      closeForm();
+    } catch {
+      // mutation error — form stays open
     }
-    closeForm();
   }
 
   return (

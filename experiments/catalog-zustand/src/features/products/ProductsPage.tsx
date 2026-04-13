@@ -3,6 +3,8 @@ import { useProducts } from './api';
 import { ProductCard } from './components/ProductCard';
 import { ProductFilters } from './components/ProductFilters';
 import { Button } from '@/components/ui/button';
+import { useUIStore } from '@/features/ui/store';
+import { ProductForm } from './components/ProductForm';
 
 const LIMIT = 12;
 
@@ -11,6 +13,7 @@ export function ProductsPage() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
 
+  const { openCreateForm } = useUIStore();
   const { data, isLoading, isError } = useProducts({ page, limit: LIMIT, search, category });
   const totalPages = data ? Math.ceil(data.total / LIMIT) : 0;
 
@@ -30,7 +33,10 @@ export function ProductsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Products</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Products</h1>
+        <Button onClick={openCreateForm}>New Product</Button>
+      </div>
       <ProductFilters
         search={search}
         onSearchChange={handleSearchChange}
@@ -69,6 +75,7 @@ export function ProductsPage() {
           )}
         </>
       )}
+      <ProductForm />
     </div>
   );
 }

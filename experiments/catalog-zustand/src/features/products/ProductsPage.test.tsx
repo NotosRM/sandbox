@@ -32,4 +32,9 @@ describe('ProductsPage', () => {
     render(<ProductsPage />, { wrapper: createTestWrapper() });
     await waitFor(() => expect(screen.getByText('Failed to load products.')).toBeInTheDocument());
   });
+
+  it('renders New Product button', async () => {
+    render(<ProductsPage />, { wrapper: createTestWrapper() });
+    expect(screen.getByRole('button', { name: 'New Product' })).toBeInTheDocument();
+  });
 });

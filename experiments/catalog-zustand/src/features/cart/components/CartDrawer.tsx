@@ -1,11 +1,11 @@
+import { Link } from 'react-router-dom';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '../store';
 import { CartItem } from './CartItem';
 
 export function CartDrawer() {
-  const { isCartOpen, toggleCart, items, totalItems } = useCartStore();
-  const totalPrice = items.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
+  const { isCartOpen, toggleCart, items, totalItems, totalPrice } = useCartStore();
 
   if (!isCartOpen) return null;
 
@@ -32,9 +32,9 @@ export function CartDrawer() {
                 <span>${totalPrice.toFixed(2)}</span>
               </div>
               <Button className="w-full" asChild>
-                <a href="/cart" onClick={toggleCart}>
+                <Link to="/cart" onClick={toggleCart}>
                   View Cart
-                </a>
+                </Link>
               </Button>
             </div>
           </>

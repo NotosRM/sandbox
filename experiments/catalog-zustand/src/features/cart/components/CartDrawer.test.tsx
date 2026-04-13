@@ -1,8 +1,17 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { useCartStore } from '../store';
 import { mockProduct } from '@/mocks/handlers';
 import { CartDrawer } from './CartDrawer';
+
+function renderDrawer() {
+  return render(
+    <MemoryRouter>
+      <CartDrawer />
+    </MemoryRouter>
+  );
+}
 
 beforeEach(() => {
   useCartStore.setState({ items: [], isCartOpen: false });
@@ -11,19 +20,19 @@ beforeEach(() => {
 
 describe('CartDrawer', () => {
   it('does not show content when closed', () => {
-    render(<CartDrawer />);
+    renderDrawer();
     expect(screen.queryByText('Your Cart')).not.toBeInTheDocument();
   });
 
   it('shows cart content when open', () => {
     useCartStore.setState({ isCartOpen: true });
-    render(<CartDrawer />);
+    renderDrawer();
     expect(screen.getByText('Your Cart')).toBeInTheDocument();
   });
 
   it('shows empty message when cart is open but empty', () => {
     useCartStore.setState({ isCartOpen: true, items: [] });
-    render(<CartDrawer />);
+    renderDrawer();
     expect(screen.getByText('Your cart is empty.')).toBeInTheDocument();
   });
 
@@ -31,8 +40,10 @@ describe('CartDrawer', () => {
     useCartStore.setState({
       isCartOpen: true,
       items: [{ product: mockProduct, quantity: 1 }],
+      totalItems: 1,
+      totalPrice: mockProduct.price,
     });
-    render(<CartDrawer />);
+    renderDrawer();
     expect(screen.getByText('Test Product')).toBeInTheDocument();
   });
 
@@ -40,8 +51,10 @@ describe('CartDrawer', () => {
     useCartStore.setState({
       isCartOpen: true,
       items: [{ product: mockProduct, quantity: 2 }],
+      totalItems: 2,
+      totalPrice: mockProduct.price * 2,
     });
-    render(<CartDrawer />);
+    renderDrawer();
     expect(screen.getByText('$199.98')).toBeInTheDocument();
   });
 });

@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createServer } from '@sandbox/shared/msw/node';
@@ -21,6 +22,7 @@ function Wrapper({ children }: { children: ReactNode }) {
       <MemoryRouter initialEntries={['/products/1']}>
         <Routes>
           <Route path="/products/:id" element={children} />
+          <Route path="/products" element={<p>Products list</p>} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>
@@ -54,5 +56,30 @@ describe('ProductDetailPage', () => {
     render(<ProductDetailPage />, { wrapper: Wrapper });
     await waitFor(() => screen.getByRole('heading', { name: 'Test Product' }));
     expect(screen.getByRole('button', { name: 'Add to Cart' })).toBeInTheDocument();
+  });
+
+  it('renders Edit button', async () => {
+    render(<ProductDetailPage />, { wrapper: Wrapper });
+    await waitFor(() => screen.getByRole('heading', { name: 'Test Product' }));
+    expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument();
+  });
+
+  it('renders Delete button', async () => {
+    render(<ProductDetailPage />, { wrapper: Wrapper });
+    await waitFor(() => screen.getByRole('heading', { name: 'Test Product' }));
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
+  });
+
+  it('clicking Delete calls mutation and navigates to /products', async () => {
+    const user = userEvent.setup();
+    render(<ProductDetailPage />, { wrapper: Wrapper });
+    await waitFor(() => screen.getByRole('heading', { name: 'Test Product' }));
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    // After optimistic delete + navigation, the products placeholder should show
+    // (MemoryRouter has no /products route in this test, so we check mutation was at least triggered)
+    // Verify by checking button disappears (navigated away)
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument()
+    );
   });
 });

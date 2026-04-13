@@ -1,10 +1,20 @@
-import { useParams, Link } from 'react-router-dom';
-import { useProduct } from './api';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useProduct, useDeleteProduct } from './api';
 import { Button } from '@/components/ui/button';
+import { useUIStore } from '@/features/ui/store';
+import { ProductForm } from './components/ProductForm';
 
 export function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: product, isLoading, isError } = useProduct(Number(id ?? 0));
+  const navigate = useNavigate();
+  const { openEditForm } = useUIStore();
+  const deleteMutation = useDeleteProduct();
+
+  async function handleDelete() {
+    await deleteMutation.mutateAsync(product!.id);
+    navigate('/products');
+  }
 
   if (isLoading) return <p className="text-muted-foreground">Loading...</p>;
   if (isError || !product) return <p className="text-destructive">Product not found.</p>;
@@ -61,9 +71,23 @@ export function ProductDetailPage() {
             <p>In stock: {product.stock}</p>
             <p>Rating: {product.rating} / 5</p>
           </div>
-          <Button className="w-full mt-6">Add to Cart</Button>
+          <div className="flex gap-2 mt-6">
+            <Button variant="outline" className="flex-1" onClick={() => openEditForm(product.id)}>
+              Edit
+            </Button>
+            <Button
+              variant="destructive"
+              className="flex-1"
+              onClick={handleDelete}
+              disabled={deleteMutation.isPending}
+            >
+              Delete
+            </Button>
+            <Button className="flex-1">Add to Cart</Button>
+          </div>
         </div>
       </div>
+      <ProductForm />
     </div>
   );
 }

@@ -1,13 +1,29 @@
 # catalog-zustand
 
-**Шаблон:** react-full
-**Дата:** 2026-04-12
-**Статус:** in-progress
+|                 |                                                                                 |
+| --------------- | ------------------------------------------------------------------------------- |
+| **Template**    | react-full                                                                      |
+| **Date**        | 2026-04-12                                                                      |
+| **Status**      | In Progress — Iteration 1 complete                                              |
+| **Goal**        | Reference implementation for state manager comparison: Zustand + TanStack Query |
+| **Conclusions** | —                                                                               |
 
-## Цель
+## Stack additions
 
-Что хочу проверить / изучить / сравнить.
+- `@tanstack/react-query` v5 — server state (product list, detail, mutations)
+- `react-router-dom` v7 — routing
+- `zustand` — client state, added in Iteration 3
 
-## Выводы
+## Iterations
 
-Что узнал, что выбрал, что запомнить.
+- **Iteration 1** ✅ — Read-only catalog: list, filters, debounced search, pagination, detail page
+- **Iteration 2** — CRUD: create, edit, delete with optimistic updates
+- **Iteration 3** — Cart: Zustand store + localStorage persist
+
+## Running
+
+```bash
+pnpm dev        # http://localhost:5173
+pnpm test:run   # all tests once
+pnpm test       # watch mode
+```

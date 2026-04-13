@@ -12,7 +12,8 @@ export function ProductDetailPage() {
   const deleteMutation = useDeleteProduct();
 
   async function handleDelete() {
-    await deleteMutation.mutateAsync(product!.id);
+    if (!product) return;
+    await deleteMutation.mutateAsync(product.id);
     navigate('/products');
   }
 

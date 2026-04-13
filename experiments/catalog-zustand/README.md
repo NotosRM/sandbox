@@ -12,7 +12,8 @@
 
 - `@tanstack/react-query` v5 — server state (product list, detail, mutations)
 - `react-router-dom` v7 — routing
-- `zustand` — client state, added in Iteration 3
+- `zustand` — client state, added in Iteration 2
+- `react-hook-form` + `zod` — form validation, added in Iteration 2
 
 ## Iterations
 

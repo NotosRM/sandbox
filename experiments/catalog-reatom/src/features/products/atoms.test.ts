@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { context } from '@reatom/core';
 import {
   pageAtom,
@@ -14,7 +15,19 @@ import {
   openCreateForm,
   openEditForm,
   closeForm,
+  createProductAction,
+  updateProductAction,
+  deleteProductAction,
 } from './atoms';
+
+vi.mock('@/lib/dummyjson', () => ({
+  fetchProducts: vi.fn().mockResolvedValue({ products: [], total: 0, skip: 0, limit: 12 }),
+  fetchCategories: vi.fn().mockResolvedValue([]),
+  fetchProduct: vi.fn().mockResolvedValue(null),
+  createProduct: vi.fn().mockResolvedValue({ id: 99, title: 'New' }),
+  updateProduct: vi.fn().mockResolvedValue({ id: 1, title: 'Updated' }),
+  deleteProduct: vi.fn().mockResolvedValue({ id: 1, isDeleted: true, deletedOn: '' }),
+}));
 
 describe('filter atoms — defaults', () => {
   it('pageAtom defaults to 1', () => {
@@ -157,5 +170,60 @@ describe('productsRefreshAtom', () => {
       productsRefreshAtom.set((v: number) => v + 1);
       expect(productsRefreshAtom()).toBe(1);
     });
+  });
+});
+
+describe('CRUD actions', () => {
+  it('createProductAction bumps productsRefreshAtom', async () => {
+    let before = 0;
+    context().run(() => {
+      before = productsRefreshAtom();
+    });
+    await createProductAction({
+      title: 'T',
+      description: 'D',
+      price: 10,
+      category: 'cat',
+      brand: 'brand',
+      thumbnail: '',
+    });
+    let after = 0;
+    context().run(() => {
+      after = productsRefreshAtom();
+    });
+    expect(after).toBe(before + 1);
+  });
+
+  it('updateProductAction bumps productsRefreshAtom', async () => {
+    let before = 0;
+    context().run(() => {
+      before = productsRefreshAtom();
+    });
+    await updateProductAction(1, {
+      title: 'T',
+      description: 'D',
+      price: 5,
+      category: 'c',
+      brand: 'b',
+      thumbnail: '',
+    });
+    let after = 0;
+    context().run(() => {
+      after = productsRefreshAtom();
+    });
+    expect(after).toBe(before + 1);
+  });
+
+  it('deleteProductAction bumps productsRefreshAtom', async () => {
+    let before = 0;
+    context().run(() => {
+      before = productsRefreshAtom();
+    });
+    await deleteProductAction(1);
+    let after = 0;
+    context().run(() => {
+      after = productsRefreshAtom();
+    });
+    expect(after).toBe(before + 1);
   });
 });

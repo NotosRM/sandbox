@@ -33,11 +33,10 @@ describe('ProductsPage', () => {
     renderWithReatom(<ProductsPage />);
     await waitFor(() => expect(screen.getByText(/no products found/i)).toBeInTheDocument());
   });
-});
 
-it('New Product button opens form', async () => {
-  const { frame } = renderWithReatom(<ProductsPage />);
-  await waitFor(() => screen.getByRole('button', { name: /new product/i }));
-  await userEvent.click(screen.getByRole('button', { name: /new product/i }));
-  frame.run(() => expect(isProductFormOpenAtom()).toBe(true));
+  it('New Product button opens form', async () => {
+    const { frame } = renderWithReatom(<ProductsPage />);
+    await userEvent.click(screen.getByRole('button', { name: /new product/i }));
+    frame.run(() => expect(isProductFormOpenAtom()).toBe(true));
+  });
 });

@@ -3,7 +3,8 @@ import { reatomComponent } from '@reatom/react';
 import { Button } from '@/components/ui/button';
 import { ProductCard } from './components/ProductCard';
 import { ProductFilters } from './components/ProductFilters';
-import { productsResource, pageAtom, LIMIT } from './atoms';
+import { ProductForm } from './components/ProductForm';
+import { productsResource, pageAtom, LIMIT, openCreateForm } from './atoms';
 
 export const ProductsPage = reatomComponent(() => {
   const data = productsResource.data();
@@ -20,7 +21,7 @@ export const ProductsPage = reatomComponent(() => {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Products</h1>
-        {/* New Product button wired in Iteration 2 */}
+        <Button onClick={wrap(openCreateForm)}>New Product</Button>
       </div>
       <ProductFilters />
       {isPending && !data ? (
@@ -59,6 +60,7 @@ export const ProductsPage = reatomComponent(() => {
           )}
         </>
       )}
+      <ProductForm />
     </div>
   );
 }, 'ProductsPage');

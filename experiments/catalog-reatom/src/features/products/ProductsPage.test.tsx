@@ -1,9 +1,11 @@
 import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { server } from '@/test/server';
 import { createHandlers } from '@/mocks/handlers';
 import { renderWithReatom } from '@/test/utils';
 import { ProductsPage } from './ProductsPage';
+import { isProductFormOpenAtom } from './atoms';
 
 describe('ProductsPage', () => {
   it('shows loading state initially', () => {
@@ -31,4 +33,11 @@ describe('ProductsPage', () => {
     renderWithReatom(<ProductsPage />);
     await waitFor(() => expect(screen.getByText(/no products found/i)).toBeInTheDocument());
   });
+});
+
+it('New Product button opens form', async () => {
+  const { frame } = renderWithReatom(<ProductsPage />);
+  await waitFor(() => screen.getByRole('button', { name: /new product/i }));
+  await userEvent.click(screen.getByRole('button', { name: /new product/i }));
+  frame.run(() => expect(isProductFormOpenAtom()).toBe(true));
 });

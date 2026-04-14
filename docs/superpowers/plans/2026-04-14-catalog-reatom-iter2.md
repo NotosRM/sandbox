@@ -2,13 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add full CRUD (create, update, delete) to the product catalog. Mutations are Reatom actions. Delete is optimistic. Form state (open/close, editing ID) lives in atoms.
+**Goal:** Add full CRUD (create, update, delete) to the product catalog. Mutations are Reatom actions с `withAsync()`. Delete делает re-fetch после удаления. Form state (open/close, editing ID) живёт в атомах.
 
 **Architecture:** All mutations and UI flag atoms added to `features/products/atoms.ts`. `productsResource` gets a refresh trigger atom so mutations can force a re-fetch. `ProductForm` uses react-hook-form + zod; submit calls Reatom action. `ProductDetailPage` and `ProductsPage` are updated to wire edit/delete/create.
 
 **Prerequisite:** Iteration 1 complete.
 
-**Tech Stack:** `@reatom/core` (atom, action), react-hook-form, zod, shadcn Dialog
+**Tech Stack:** `@reatom/core` (atom, action, wrap, withAsync), `@reatom/react` (reatomComponent), react-hook-form, zod, shadcn Dialog
 
 ---
 
@@ -37,7 +37,7 @@
 Append to `experiments/catalog-reatom/src/features/products/atoms.test.ts`:
 
 ```ts
-import { action } from '@reatom/core';
+import { context } from '@reatom/core';
 import {
   // existing imports...
   pageAtom,
@@ -59,51 +59,67 @@ import {
 
 describe('UI flag atoms', () => {
   it('isProductFormOpenAtom defaults to false', () => {
-    const ctx = createCtx();
-    expect(ctx.get(isProductFormOpenAtom)).toBe(false);
+    const frame = context.start();
+    frame.run(() => {
+      expect(isProductFormOpenAtom()).toBe(false);
+    });
   });
 
   it('editingProductIdAtom defaults to null', () => {
-    const ctx = createCtx();
-    expect(ctx.get(editingProductIdAtom)).toBeNull();
+    const frame = context.start();
+    frame.run(() => {
+      expect(editingProductIdAtom()).toBeNull();
+    });
   });
 
   it('openCreateForm opens form with no editing ID', () => {
-    const ctx = createCtx();
-    openCreateForm(ctx);
-    expect(ctx.get(isProductFormOpenAtom)).toBe(true);
-    expect(ctx.get(editingProductIdAtom)).toBeNull();
+    const frame = context.start();
+    frame.run(() => {
+      openCreateForm();
+      expect(isProductFormOpenAtom()).toBe(true);
+      expect(editingProductIdAtom()).toBeNull();
+    });
   });
 
   it('openEditForm opens form with product ID', () => {
-    const ctx = createCtx();
-    openEditForm(ctx, 42);
-    expect(ctx.get(isProductFormOpenAtom)).toBe(true);
-    expect(ctx.get(editingProductIdAtom)).toBe(42);
+    const frame = context.start();
+    frame.run(() => {
+      openEditForm(42);
+      expect(isProductFormOpenAtom()).toBe(true);
+      expect(editingProductIdAtom()).toBe(42);
+    });
   });
 
   it('closeForm resets form state', () => {
-    const ctx = createCtx();
-    openEditForm(ctx, 42);
-    closeForm(ctx);
-    expect(ctx.get(isProductFormOpenAtom)).toBe(false);
-    expect(ctx.get(editingProductIdAtom)).toBeNull();
+    const frame = context.start();
+    frame.run(() => {
+      openEditForm(42);
+      closeForm();
+      expect(isProductFormOpenAtom()).toBe(false);
+      expect(editingProductIdAtom()).toBeNull();
+    });
   });
 });
 
 describe('productsRefreshAtom', () => {
   it('defaults to 0', () => {
-    const ctx = createCtx();
-    expect(ctx.get(productsRefreshAtom)).toBe(0);
+    const frame = context.start();
+    frame.run(() => {
+      expect(productsRefreshAtom()).toBe(0);
+    });
   });
 
   it('increments when bumped', () => {
-    const ctx = createCtx();
-    productsRefreshAtom(ctx, (v) => v + 1);
-    expect(ctx.get(productsRefreshAtom)).toBe(1);
+    const frame = context.start();
+    frame.run(() => {
+      productsRefreshAtom.set((v) => v + 1);
+      expect(productsRefreshAtom()).toBe(1);
+    });
   });
 });
 ```
+
+**Изменения vs v3:** `createCtx()` → `context.start()`, все операции в `frame.run()`, `openCreateForm(ctx)` → `openCreateForm()`, `ctx.get(atom)` → `atom()`, `productsRefreshAtom(ctx, (v) => v + 1)` → `productsRefreshAtom.set((v) => v + 1)`.
 
 - [ ] **Step 2: Run to verify failure**
 
@@ -118,7 +134,8 @@ Expected: FAIL — new exports not found.
 Add to `experiments/catalog-reatom/src/features/products/atoms.ts` (append after existing code):
 
 ```ts
-import { action } from '@reatom/core';
+import { action, wrap } from '@reatom/core';
+import { withAsync } from '@reatom/core';
 import { createProduct, updateProduct, deleteProduct } from '@/lib/dummyjson';
 import type { Product } from './types';
 import { z } from 'zod';
@@ -128,16 +145,16 @@ import { z } from 'zod';
 export const productsRefreshAtom = atom(0, 'productsRefreshAtom');
 ```
 
-Also update `productsResource` to spy on `productsRefreshAtom`:
+Also update `productsResource` to read `productsRefreshAtom` (adds reactive dependency):
 
 ```ts
-export const productsResource = reatomResource(async (ctx) => {
-  ctx.spy(productsRefreshAtom); // re-run on bump
-  const page = ctx.spy(pageAtom);
-  const search = ctx.spy(searchAtom);
-  const category = ctx.spy(categoryAtom);
-  return await fetchProducts({ page, limit: LIMIT, search, category });
-}, 'productsResource').pipe(withDataAtom(null), withErrorAtom(), withStatusesAtom());
+export const productsResource = computed(async () => {
+  productsRefreshAtom(); // re-run on bump — читаем, чтобы создать зависимость
+  const page = pageAtom();
+  const search = searchAtom();
+  const category = categoryAtom();
+  return await wrap(fetchProducts({ page, limit: LIMIT, search, category }));
+}, 'productsResource').extend(withAsyncData({ initState: null, status: true }));
 ```
 
 Then append the rest:
@@ -148,19 +165,19 @@ Then append the rest:
 export const isProductFormOpenAtom = atom(false, 'isProductFormOpenAtom');
 export const editingProductIdAtom = atom<number | null>(null, 'editingProductIdAtom');
 
-export const openCreateForm = action((ctx) => {
-  isProductFormOpenAtom(ctx, true);
-  editingProductIdAtom(ctx, null);
+export const openCreateForm = action(() => {
+  isProductFormOpenAtom.set(true);
+  editingProductIdAtom.set(null);
 }, 'openCreateForm');
 
-export const openEditForm = action((ctx, id: number) => {
-  isProductFormOpenAtom(ctx, true);
-  editingProductIdAtom(ctx, id);
+export const openEditForm = action((id: number) => {
+  isProductFormOpenAtom.set(true);
+  editingProductIdAtom.set(id);
 }, 'openEditForm');
 
-export const closeForm = action((ctx) => {
-  isProductFormOpenAtom(ctx, false);
-  editingProductIdAtom(ctx, null);
+export const closeForm = action(() => {
+  isProductFormOpenAtom.set(false);
+  editingProductIdAtom.set(null);
 }, 'closeForm');
 
 // ─── Form data schema ──────────────────────────────────────────────────────────
@@ -178,36 +195,38 @@ export type ProductFormData = z.infer<typeof productSchema>;
 
 // ─── CRUD actions ─────────────────────────────────────────────────────────────
 
-export const createProductAction = action(async (ctx, data: ProductFormData) => {
-  await createProduct({ ...data, discountPercentage: 0 });
-  productsRefreshAtom(ctx, (v) => v + 1);
-}, 'createProductAction');
+export const createProductAction = action(async (data: ProductFormData) => {
+  await wrap(createProduct({ ...data, discountPercentage: 0 }));
+  productsRefreshAtom.set((v) => v + 1);
+}, 'createProductAction').extend(withAsync());
 
-export const updateProductAction = action(async (ctx, id: number, data: ProductFormData) => {
-  await updateProduct(id, data);
-  productsRefreshAtom(ctx, (v) => v + 1);
+export const updateProductAction = action(async (id: number, data: ProductFormData) => {
+  await wrap(updateProduct(id, data));
+  productsRefreshAtom.set((v) => v + 1);
   // Also refresh the detail resource if on detail page
-  if (ctx.get(productIdAtom) === id) {
-    productIdAtom(ctx, 0);
-    productIdAtom(ctx, id);
+  if (productIdAtom() === id) {
+    productIdAtom.set(0);
+    productIdAtom.set(id);
   }
-}, 'updateProductAction');
+}, 'updateProductAction').extend(withAsync());
 
-export const deleteProductAction = action(async (ctx, id: number) => {
-  // Optimistic: remove from list immediately
-  productsResource.dataAtom(ctx, (prev) =>
-    prev
-      ? { ...prev, products: prev.products.filter((p) => p.id !== id), total: prev.total - 1 }
-      : prev
-  );
+export const deleteProductAction = action(async (id: number) => {
+  // Delete, then force re-fetch of the list
   try {
-    await deleteProduct(id);
-  } catch {
-    // Rollback: trigger re-fetch
-    productsRefreshAtom(ctx, (v) => v + 1);
+    await wrap(deleteProduct(id));
+  } finally {
+    productsRefreshAtom.set((v) => v + 1);
   }
-}, 'deleteProductAction');
+}, 'deleteProductAction').extend(withAsync());
 ```
+
+**Изменения vs v3:**
+
+- `action((ctx, arg) => { atom(ctx, value) })` → `action((arg) => { atom.set(value) })`
+- Действия вызываются без `ctx`: `openCreateForm(ctx)` → `openCreateForm()`
+- Все `async` операции обёрнуты в `wrap()`
+- `.extend(withAsync())` вместо ничего (даёт `.ready()`, `.error()`, `.retry()`)
+- Оптимистичное удаление убрано — `withAsyncData.data` read-only; вместо этого delete + refresh
 
 - [ ] **Step 4: Run to verify pass**
 
@@ -242,12 +261,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithReatom } from '@/test/utils';
 import { ProductForm } from './ProductForm';
-import {
-  isProductFormOpenAtom,
-  editingProductIdAtom,
-  openCreateForm,
-  openEditForm,
-} from '../atoms';
+import { isProductFormOpenAtom, openCreateForm, openEditForm } from '../atoms';
 
 describe('ProductForm', () => {
   it('is not visible when form is closed', () => {
@@ -256,21 +270,21 @@ describe('ProductForm', () => {
   });
 
   it('shows "New Product" title in create mode', () => {
-    const { ctx } = renderWithReatom(<ProductForm />);
-    openCreateForm(ctx);
+    const { frame } = renderWithReatom(<ProductForm />);
+    frame.run(() => openCreateForm());
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText('New Product')).toBeInTheDocument();
   });
 
   it('shows "Edit Product" title in edit mode', () => {
-    const { ctx } = renderWithReatom(<ProductForm />);
-    openEditForm(ctx, 1);
+    const { frame } = renderWithReatom(<ProductForm />);
+    frame.run(() => openEditForm(1));
     expect(screen.getByText('Edit Product')).toBeInTheDocument();
   });
 
   it('shows validation errors on empty submit', async () => {
-    const { ctx } = renderWithReatom(<ProductForm />);
-    openCreateForm(ctx);
+    const { frame } = renderWithReatom(<ProductForm />);
+    frame.run(() => openCreateForm());
     await userEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
       expect(screen.getByText('Title is required')).toBeInTheDocument();
@@ -278,21 +292,23 @@ describe('ProductForm', () => {
   });
 
   it('closes form on Cancel click', async () => {
-    const { ctx } = renderWithReatom(<ProductForm />);
-    openCreateForm(ctx);
+    const { frame } = renderWithReatom(<ProductForm />);
+    frame.run(() => openCreateForm());
     await userEvent.click(screen.getByRole('button', { name: /cancel/i }));
-    expect(ctx.get(isProductFormOpenAtom)).toBe(false);
+    frame.run(() => expect(isProductFormOpenAtom()).toBe(false));
   });
 
   it('prefills form when editing product 1', async () => {
-    const { ctx } = renderWithReatom(<ProductForm />);
-    openEditForm(ctx, 1);
+    const { frame } = renderWithReatom(<ProductForm />);
+    frame.run(() => openEditForm(1));
     await waitFor(() => {
       expect(screen.getByDisplayValue('Test Product')).toBeInTheDocument();
     });
   });
 });
 ```
+
+**Изменения vs v3:** `{ ctx }` → `{ frame }` из `renderWithReatom`, `openCreateForm(ctx)` → `frame.run(() => openCreateForm())`, `ctx.get(isProductFormOpenAtom)` → `frame.run(() => isProductFormOpenAtom())`.
 
 - [ ] **Step 2: Run to verify failure**
 
@@ -310,7 +326,8 @@ Create `experiments/catalog-reatom/src/features/products/components/ProductForm.
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { reatomComponent } from '@reatom/npm-react';
+import { wrap } from '@reatom/core';
+import { reatomComponent } from '@reatom/react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -328,19 +345,19 @@ import {
   type ProductFormData,
 } from '../atoms';
 
-export const ProductForm = reatomComponent(({ ctx }) => {
-  const isOpen = ctx.spy(isProductFormOpenAtom);
-  const editingId = ctx.spy(editingProductIdAtom);
+export const ProductForm = reatomComponent(() => {
+  const isOpen = isProductFormOpenAtom();
+  const editingId = editingProductIdAtom();
   const isEditMode = editingId !== null;
 
   // When edit mode activates, set productIdAtom so productResource fetches the product
   useEffect(() => {
     if (isEditMode && editingId !== null) {
-      productIdAtom(ctx, editingId);
+      productIdAtom.set(editingId);
     }
-  }, [ctx, isEditMode, editingId]);
+  }, [isEditMode, editingId]);
 
-  const existingProduct = ctx.spy(productResource.dataAtom);
+  const existingProduct = productResource.data();
 
   const {
     register,
@@ -372,18 +389,18 @@ export const ProductForm = reatomComponent(({ ctx }) => {
   async function onSubmit(data: ProductFormData) {
     try {
       if (isEditMode && editingId !== null) {
-        await updateProductAction(ctx, editingId, data);
+        await updateProductAction(editingId, data);
       } else {
-        await createProductAction(ctx, data);
+        await createProductAction(data);
       }
-      closeForm(ctx);
+      closeForm();
     } catch {
       // stay open on error
     }
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && closeForm(ctx)}>
+    <Dialog open={isOpen} onOpenChange={wrap((open) => !open && closeForm())}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>{isEditMode ? 'Edit Product' : 'New Product'}</DialogTitle>
@@ -428,7 +445,7 @@ export const ProductForm = reatomComponent(({ ctx }) => {
             )}
           </div>
           <div className="flex justify-end gap-2 mt-2">
-            <Button type="button" variant="outline" onClick={() => closeForm(ctx)}>
+            <Button type="button" variant="outline" onClick={wrap(closeForm)}>
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
@@ -441,6 +458,8 @@ export const ProductForm = reatomComponent(({ ctx }) => {
   );
 }, 'ProductForm');
 ```
+
+**Изменения vs v3:** `({ ctx })` → `()`, `ctx.spy(atom)` → `atom()`, `atom(ctx, value)` → `atom.set(value)`, `closeForm(ctx)` → `closeForm()`, `updateProductAction(ctx, id, data)` → `updateProductAction(id, data)`, `createProductAction(ctx, data)` → `createProductAction(data)`, onClick/onOpenChange обёрнуты в `wrap()`. `useEffect` без `ctx` в deps.
 
 - [ ] **Step 4: Run to verify pass**
 
@@ -473,10 +492,10 @@ Append to `experiments/catalog-reatom/src/features/products/ProductsPage.test.ts
 import { isProductFormOpenAtom } from './atoms';
 
 it('New Product button opens form', async () => {
-  const { ctx } = renderWithReatom(<ProductsPage />);
+  const { frame } = renderWithReatom(<ProductsPage />);
   await waitFor(() => screen.getByRole('button', { name: /new product/i }));
   await userEvent.click(screen.getByRole('button', { name: /new product/i }));
-  expect(ctx.get(isProductFormOpenAtom)).toBe(true);
+  frame.run(() => expect(isProductFormOpenAtom()).toBe(true));
 });
 ```
 
@@ -490,11 +509,10 @@ Expected: FAIL — "New Product" button not found.
 
 - [ ] **Step 3: Update ProductsPage**
 
-In `experiments/catalog-reatom/src/features/products/ProductsPage.tsx`, add the imports and wire the button:
-
-At the top, add to existing imports:
+In `experiments/catalog-reatom/src/features/products/ProductsPage.tsx`, add to existing imports:
 
 ```tsx
+import { wrap } from '@reatom/core';
 import { ProductForm } from './components/ProductForm';
 import { openCreateForm } from './atoms';
 ```
@@ -502,7 +520,7 @@ import { openCreateForm } from './atoms';
 Replace the comment `{/* New Product button wired in Iteration 2 */}` with:
 
 ```tsx
-<Button onClick={() => openCreateForm(ctx)}>New Product</Button>
+<Button onClick={wrap(openCreateForm)}>New Product</Button>
 ```
 
 At the end, just before the closing `</div>` of the outer wrapper, add:
@@ -543,14 +561,16 @@ import userEvent from '@testing-library/user-event';
 import { isProductFormOpenAtom, editingProductIdAtom } from './atoms';
 
 it('Edit button opens form with correct product ID', async () => {
-  const { ctx } = renderWithReatom(<ProductDetailPage />, {
+  const { frame } = renderWithReatom(<ProductDetailPage />, {
     route: '/products/1',
     routePath: '/products/:id',
   });
   await waitFor(() => screen.getByRole('button', { name: /edit/i }));
   await userEvent.click(screen.getByRole('button', { name: /edit/i }));
-  expect(ctx.get(isProductFormOpenAtom)).toBe(true);
-  expect(ctx.get(editingProductIdAtom)).toBe(1);
+  frame.run(() => {
+    expect(isProductFormOpenAtom()).toBe(true);
+    expect(editingProductIdAtom()).toBe(1);
+  });
 });
 
 it('Delete button calls deleteProductAction', async () => {
@@ -563,6 +583,8 @@ it('Delete button calls deleteProductAction', async () => {
   expect(screen.getByRole('button', { name: /delete/i })).not.toBeDisabled();
 });
 ```
+
+**Изменения vs v3:** `{ ctx }` → `{ frame }`, `ctx.get(atom)` → `frame.run(() => atom())`.
 
 - [ ] **Step 2: Run to verify failure**
 
@@ -580,13 +602,8 @@ Add to existing imports:
 
 ```tsx
 import { useNavigate } from 'react-router-dom';
-import {
-  productResource,
-  productIdAtom,
-  openEditForm,
-  deleteProductAction,
-  isProductFormOpenAtom,
-} from './atoms';
+import { wrap } from '@reatom/core';
+import { productResource, productIdAtom, openEditForm, deleteProductAction } from './atoms';
 import { ProductForm } from './components/ProductForm';
 ```
 
@@ -598,24 +615,26 @@ Replace `{/* Edit / Delete wired in Iteration 2 */}` comment with:
 <Button
   variant="outline"
   className="flex-1"
-  onClick={() => product && openEditForm(ctx, product.id)}
+  onClick={wrap(() => product && openEditForm(product.id))}
 >
   Edit
 </Button>
 <Button
   variant="destructive"
   className="flex-1"
-  onClick={async () => {
+  onClick={wrap(async () => {
     if (!product) return;
-    await deleteProductAction(ctx, product.id);
+    await deleteProductAction(product.id);
     navigate('/products');
-  }}
+  })}
 >
   Delete
 </Button>
 ```
 
 Add `<ProductForm />` after the closing `</div>` of the main content (just before the outer `</div>`).
+
+**Изменения vs v3:** `openEditForm(ctx, product.id)` → `wrap(() => openEditForm(product.id))`, `deleteProductAction(ctx, product.id)` → `wrap(async () => deleteProductAction(product.id))`. Все обработчики обёрнуты в `wrap()`.
 
 - [ ] **Step 4: Run to verify pass**
 
@@ -637,5 +656,5 @@ Expected: All tests pass.
 
 ```bash
 rtk git add experiments/catalog-reatom/src/features/products/ProductDetailPage.tsx
-rtk git commit -m "feat(catalog-reatom): iter2 complete — CRUD with optimistic delete"
+rtk git commit -m "feat(catalog-reatom): iter2 complete — CRUD with delete+refresh"
 ```

@@ -4,11 +4,11 @@
 
 **Goal:** Add a persistent shopping cart: `cartItemsAtom` with `withLocalStorage`, computed totals, CartDrawer, CartItem, full CartPage, cart badge in header. Wire "Add to Cart" in ProductCard and ProductDetailPage.
 
-**Architecture:** `features/cart/atoms.ts` owns all cart state — `cartItemsAtom` persisted via `withLocalStorage`, computed `totalItemsAtom` / `totalPriceAtom`, actions for add/remove/updateQuantity/clear. `Layout` updated with live badge and `CartDrawer`. `CartItem` and `CartDrawer` are `reatomComponent`.
+**Architecture:** `features/cart/atoms.ts` owns all cart state — `cartItemsAtom` persisted via `withLocalStorage` из `@reatom/core`, computed `totalItemsAtom` / `totalPriceAtom`, actions for add/remove/updateQuantity/clear. `Layout` updated with live badge and `CartDrawer`. `CartItem` and `CartDrawer` are `reatomComponent`.
 
 **Prerequisite:** Iterations 1 and 2 complete.
 
-**Tech Stack:** `@reatom/persist-web-storage` (withLocalStorage), `@reatom/core`, shadcn Sheet
+**Tech Stack:** `@reatom/core` (withLocalStorage, computed, action, wrap), `@reatom/react` (reatomComponent), shadcn Sheet
 
 ---
 
@@ -42,7 +42,7 @@
 Create `experiments/catalog-reatom/src/features/cart/atoms.test.ts`:
 
 ```ts
-import { createCtx } from '@reatom/core';
+import { context } from '@reatom/core';
 import {
   cartItemsAtom,
   totalItemsAtom,
@@ -73,104 +73,132 @@ const mockProduct2: Product = { ...mockProduct, id: 2, price: 20 };
 
 describe('cartItemsAtom defaults', () => {
   it('starts empty', () => {
-    const ctx = createCtx();
-    expect(ctx.get(cartItemsAtom)).toEqual([]);
+    const frame = context.start();
+    frame.run(() => {
+      expect(cartItemsAtom()).toEqual([]);
+    });
   });
 
   it('totalItemsAtom starts at 0', () => {
-    const ctx = createCtx();
-    expect(ctx.get(totalItemsAtom)).toBe(0);
+    const frame = context.start();
+    frame.run(() => {
+      expect(totalItemsAtom()).toBe(0);
+    });
   });
 
   it('totalPriceAtom starts at 0', () => {
-    const ctx = createCtx();
-    expect(ctx.get(totalPriceAtom)).toBe(0);
+    const frame = context.start();
+    frame.run(() => {
+      expect(totalPriceAtom()).toBe(0);
+    });
   });
 
   it('isCartOpenAtom starts false', () => {
-    const ctx = createCtx();
-    expect(ctx.get(isCartOpenAtom)).toBe(false);
+    const frame = context.start();
+    frame.run(() => {
+      expect(isCartOpenAtom()).toBe(false);
+    });
   });
 });
 
 describe('addItem', () => {
   it('adds product to cart', () => {
-    const ctx = createCtx();
-    addItem(ctx, mockProduct);
-    expect(ctx.get(cartItemsAtom)).toHaveLength(1);
-    expect(ctx.get(cartItemsAtom)[0].product.id).toBe(1);
-    expect(ctx.get(cartItemsAtom)[0].quantity).toBe(1);
+    const frame = context.start();
+    frame.run(() => {
+      addItem(mockProduct);
+      expect(cartItemsAtom()).toHaveLength(1);
+      expect(cartItemsAtom()[0].product.id).toBe(1);
+      expect(cartItemsAtom()[0].quantity).toBe(1);
+    });
   });
 
   it('increments quantity if product already in cart', () => {
-    const ctx = createCtx();
-    addItem(ctx, mockProduct);
-    addItem(ctx, mockProduct);
-    expect(ctx.get(cartItemsAtom)).toHaveLength(1);
-    expect(ctx.get(cartItemsAtom)[0].quantity).toBe(2);
+    const frame = context.start();
+    frame.run(() => {
+      addItem(mockProduct);
+      addItem(mockProduct);
+      expect(cartItemsAtom()).toHaveLength(1);
+      expect(cartItemsAtom()[0].quantity).toBe(2);
+    });
   });
 
   it('updates totalItemsAtom', () => {
-    const ctx = createCtx();
-    addItem(ctx, mockProduct);
-    addItem(ctx, mockProduct2);
-    expect(ctx.get(totalItemsAtom)).toBe(2);
+    const frame = context.start();
+    frame.run(() => {
+      addItem(mockProduct);
+      addItem(mockProduct2);
+      expect(totalItemsAtom()).toBe(2);
+    });
   });
 
   it('updates totalPriceAtom', () => {
-    const ctx = createCtx();
-    addItem(ctx, mockProduct); // $10
-    addItem(ctx, mockProduct2); // $20
-    expect(ctx.get(totalPriceAtom)).toBe(30);
+    const frame = context.start();
+    frame.run(() => {
+      addItem(mockProduct); // $10
+      addItem(mockProduct2); // $20
+      expect(totalPriceAtom()).toBe(30);
+    });
   });
 });
 
 describe('removeItem', () => {
   it('removes product from cart', () => {
-    const ctx = createCtx();
-    addItem(ctx, mockProduct);
-    removeItem(ctx, mockProduct.id);
-    expect(ctx.get(cartItemsAtom)).toHaveLength(0);
+    const frame = context.start();
+    frame.run(() => {
+      addItem(mockProduct);
+      removeItem(mockProduct.id);
+      expect(cartItemsAtom()).toHaveLength(0);
+    });
   });
 });
 
 describe('updateQuantity', () => {
   it('updates quantity of existing item', () => {
-    const ctx = createCtx();
-    addItem(ctx, mockProduct);
-    updateQuantity(ctx, mockProduct.id, 5);
-    expect(ctx.get(cartItemsAtom)[0].quantity).toBe(5);
+    const frame = context.start();
+    frame.run(() => {
+      addItem(mockProduct);
+      updateQuantity(mockProduct.id, 5);
+      expect(cartItemsAtom()[0].quantity).toBe(5);
+    });
   });
 
   it('removes item when quantity set to 0', () => {
-    const ctx = createCtx();
-    addItem(ctx, mockProduct);
-    updateQuantity(ctx, mockProduct.id, 0);
-    expect(ctx.get(cartItemsAtom)).toHaveLength(0);
+    const frame = context.start();
+    frame.run(() => {
+      addItem(mockProduct);
+      updateQuantity(mockProduct.id, 0);
+      expect(cartItemsAtom()).toHaveLength(0);
+    });
   });
 });
 
 describe('clearCart', () => {
   it('empties the cart', () => {
-    const ctx = createCtx();
-    addItem(ctx, mockProduct);
-    addItem(ctx, mockProduct2);
-    clearCart(ctx);
-    expect(ctx.get(cartItemsAtom)).toHaveLength(0);
-    expect(ctx.get(totalItemsAtom)).toBe(0);
+    const frame = context.start();
+    frame.run(() => {
+      addItem(mockProduct);
+      addItem(mockProduct2);
+      clearCart();
+      expect(cartItemsAtom()).toHaveLength(0);
+      expect(totalItemsAtom()).toBe(0);
+    });
   });
 });
 
 describe('isCartOpenAtom', () => {
   it('can be toggled', () => {
-    const ctx = createCtx();
-    isCartOpenAtom(ctx, true);
-    expect(ctx.get(isCartOpenAtom)).toBe(true);
-    isCartOpenAtom(ctx, false);
-    expect(ctx.get(isCartOpenAtom)).toBe(false);
+    const frame = context.start();
+    frame.run(() => {
+      isCartOpenAtom.set(true);
+      expect(isCartOpenAtom()).toBe(true);
+      isCartOpenAtom.set(false);
+      expect(isCartOpenAtom()).toBe(false);
+    });
   });
 });
 ```
+
+**Изменения vs v3:** `createCtx()` → `context.start()`, все операции в `frame.run()`, `addItem(ctx, product)` → `addItem(product)`, `ctx.get(atom)` → `atom()`, `isCartOpenAtom(ctx, true)` → `isCartOpenAtom.set(true)`.
 
 - [ ] **Step 2: Run to verify failure**
 
@@ -185,8 +213,8 @@ Expected: FAIL — `./atoms` not found.
 Create `experiments/catalog-reatom/src/features/cart/atoms.ts`:
 
 ```ts
-import { atom, action } from '@reatom/core';
-import { withLocalStorage } from '@reatom/persist-web-storage';
+import { atom, computed, action } from '@reatom/core';
+import { withLocalStorage } from '@reatom/core';
 import type { Product } from '../products/types';
 
 export interface CartItem {
@@ -196,19 +224,19 @@ export interface CartItem {
 
 // ─── Persisted cart items ─────────────────────────────────────────────────────
 
-export const cartItemsAtom = atom<CartItem[]>([], 'cartItemsAtom').pipe(
+export const cartItemsAtom = atom<CartItem[]>([], 'cartItemsAtom').extend(
   withLocalStorage('catalog-cart')
 );
 
 // ─── Computed atoms ───────────────────────────────────────────────────────────
 
-export const totalItemsAtom = atom(
-  (ctx) => ctx.spy(cartItemsAtom).reduce((sum, i) => sum + i.quantity, 0),
+export const totalItemsAtom = computed(
+  () => cartItemsAtom().reduce((sum, i) => sum + i.quantity, 0),
   'totalItemsAtom'
 );
 
-export const totalPriceAtom = atom(
-  (ctx) => ctx.spy(cartItemsAtom).reduce((sum, i) => sum + i.product.price * i.quantity, 0),
+export const totalPriceAtom = computed(
+  () => cartItemsAtom().reduce((sum, i) => sum + i.product.price * i.quantity, 0),
   'totalPriceAtom'
 );
 
@@ -218,8 +246,8 @@ export const isCartOpenAtom = atom(false, 'isCartOpenAtom');
 
 // ─── Actions ─────────────────────────────────────────────────────────────────
 
-export const addItem = action((ctx, product: Product) => {
-  cartItemsAtom(ctx, (prev) => {
+export const addItem = action((product: Product) => {
+  cartItemsAtom.set((prev) => {
     const existing = prev.find((i) => i.product.id === product.id);
     if (existing) {
       return prev.map((i) =>
@@ -230,24 +258,30 @@ export const addItem = action((ctx, product: Product) => {
   });
 }, 'addItem');
 
-export const removeItem = action((ctx, id: number) => {
-  cartItemsAtom(ctx, (prev) => prev.filter((i) => i.product.id !== id));
+export const removeItem = action((id: number) => {
+  cartItemsAtom.set((prev) => prev.filter((i) => i.product.id !== id));
 }, 'removeItem');
 
-export const updateQuantity = action((ctx, id: number, qty: number) => {
+export const updateQuantity = action((id: number, qty: number) => {
   if (qty <= 0) {
-    cartItemsAtom(ctx, (prev) => prev.filter((i) => i.product.id !== id));
+    cartItemsAtom.set((prev) => prev.filter((i) => i.product.id !== id));
   } else {
-    cartItemsAtom(ctx, (prev) =>
+    cartItemsAtom.set((prev) =>
       prev.map((i) => (i.product.id === id ? { ...i, quantity: qty } : i))
     );
   }
 }, 'updateQuantity');
 
-export const clearCart = action((ctx) => {
-  cartItemsAtom(ctx, []);
+export const clearCart = action(() => {
+  cartItemsAtom.set([]);
 }, 'clearCart');
 ```
+
+**Изменения vs v3:**
+
+- `atom((ctx) => ctx.spy(cartItemsAtom).reduce(...))` → `computed(() => cartItemsAtom().reduce(...))` из `@reatom/core`
+- `action((ctx, product) => { cartItemsAtom(ctx, prev => ...) })` → `action((product) => { cartItemsAtom.set(prev => ...) })`
+- `.pipe(withLocalStorage(...))` → `.extend(withLocalStorage(...))` из `@reatom/core` (не из `@reatom/persist-web-storage`)
 
 - [ ] **Step 4: Run to verify pass**
 
@@ -315,20 +349,22 @@ describe('CartItem', () => {
   });
 
   it('calls updateQuantity when quantity changes', async () => {
-    const { ctx } = renderWithReatom(<CartItem item={mockItem} />);
-    addItem(ctx, mockProduct);
-    addItem(ctx, mockProduct); // qty = 2
+    const { frame } = renderWithReatom(<CartItem item={mockItem} />);
+    frame.run(() => {
+      addItem(mockProduct);
+      addItem(mockProduct); // qty = 2
+    });
     const input = screen.getByRole('spinbutton');
     await userEvent.clear(input);
     await userEvent.type(input, '5');
-    expect(ctx.get(cartItemsAtom)[0].quantity).toBe(5);
+    frame.run(() => expect(cartItemsAtom()[0].quantity).toBe(5));
   });
 
   it('calls removeItem when delete button is clicked', async () => {
-    const { ctx } = renderWithReatom(<CartItem item={mockItem} />);
-    addItem(ctx, mockProduct);
+    const { frame } = renderWithReatom(<CartItem item={mockItem} />);
+    frame.run(() => addItem(mockProduct));
     await userEvent.click(screen.getByRole('button', { name: /remove test product/i }));
-    expect(ctx.get(cartItemsAtom)).toHaveLength(0);
+    frame.run(() => expect(cartItemsAtom()).toHaveLength(0));
   });
 });
 ```
@@ -347,13 +383,14 @@ Create `experiments/catalog-reatom/src/features/cart/components/CartItem.tsx`:
 
 ```tsx
 import { Trash2 } from 'lucide-react';
-import { reatomComponent } from '@reatom/npm-react';
+import { wrap } from '@reatom/core';
+import { reatomComponent } from '@reatom/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { updateQuantity, removeItem } from '../atoms';
 import type { CartItem as CartItemType } from '../atoms';
 
-export const CartItem = reatomComponent<{ item: CartItemType }>(({ ctx, item }) => {
+export const CartItem = reatomComponent<{ item: CartItemType }>(({ item }) => {
   const { product, quantity } = item;
   return (
     <div className="flex items-center gap-3 py-3">
@@ -370,14 +407,14 @@ export const CartItem = reatomComponent<{ item: CartItemType }>(({ ctx, item }) 
         type="number"
         min={1}
         value={quantity}
-        onChange={(e) => updateQuantity(ctx, product.id, Number(e.target.value))}
+        onChange={wrap((e) => updateQuantity(product.id, Number(e.target.value)))}
         className="w-16 text-center"
         aria-label={`Quantity for ${product.title}`}
       />
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => removeItem(ctx, product.id)}
+        onClick={wrap(() => removeItem(product.id))}
         aria-label={`Remove ${product.title}`}
       >
         <Trash2 className="h-4 w-4 text-destructive" />
@@ -386,6 +423,8 @@ export const CartItem = reatomComponent<{ item: CartItemType }>(({ ctx, item }) 
   );
 }, 'CartItem');
 ```
+
+**Изменения vs v3:** `({ ctx, item })` → `({ item })`, `updateQuantity(ctx, ...)` → `wrap((e) => updateQuantity(...))`, `removeItem(ctx, ...)` → `wrap(() => removeItem(...))`.
 
 - [ ] **Step 4: Run to verify pass**
 
@@ -444,34 +483,39 @@ describe('CartDrawer', () => {
   });
 
   it('shows empty cart message when open with no items', () => {
-    const { ctx } = renderWithReatom(<CartDrawer />);
-    isCartOpenAtom(ctx, true);
+    const { frame } = renderWithReatom(<CartDrawer />);
+    frame.run(() => isCartOpenAtom.set(true));
     expect(screen.getByText(/your cart is empty/i)).toBeInTheDocument();
   });
 
   it('shows cart item when product added', () => {
-    const { ctx } = renderWithReatom(<CartDrawer />);
-    addItem(ctx, mockProduct);
-    isCartOpenAtom(ctx, true);
+    const { frame } = renderWithReatom(<CartDrawer />);
+    frame.run(() => {
+      addItem(mockProduct);
+      isCartOpenAtom.set(true);
+    });
     expect(screen.getByText('Test Product')).toBeInTheDocument();
   });
 
   it('shows total price', () => {
-    const { ctx } = renderWithReatom(<CartDrawer />);
-    addItem(ctx, mockProduct);
-    isCartOpenAtom(ctx, true);
+    const { frame } = renderWithReatom(<CartDrawer />);
+    frame.run(() => {
+      addItem(mockProduct);
+      isCartOpenAtom.set(true);
+    });
     expect(screen.getByText('$99.99')).toBeInTheDocument();
   });
 
   it('closes when sheet is dismissed', async () => {
-    const { ctx } = renderWithReatom(<CartDrawer />);
-    isCartOpenAtom(ctx, true);
-    // Sheet close button (×)
+    const { frame } = renderWithReatom(<CartDrawer />);
+    frame.run(() => isCartOpenAtom.set(true));
     await userEvent.keyboard('{Escape}');
-    expect(ctx.get(isCartOpenAtom)).toBe(false);
+    frame.run(() => expect(isCartOpenAtom()).toBe(false));
   });
 });
 ```
+
+**Изменения vs v3:** `isCartOpenAtom(ctx, true)` → `frame.run(() => isCartOpenAtom.set(true))`, `addItem(ctx, product)` → `frame.run(() => addItem(product))`, `ctx.get(isCartOpenAtom)` → `frame.run(() => isCartOpenAtom())`.
 
 - [ ] **Step 2: Run to verify failure**
 
@@ -487,20 +531,21 @@ Create `experiments/catalog-reatom/src/features/cart/components/CartDrawer.tsx`:
 
 ```tsx
 import { Link } from 'react-router-dom';
-import { reatomComponent } from '@reatom/npm-react';
+import { wrap } from '@reatom/core';
+import { reatomComponent } from '@reatom/react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { cartItemsAtom, totalItemsAtom, totalPriceAtom, isCartOpenAtom } from '../atoms';
 import { CartItem } from './CartItem';
 
-export const CartDrawer = reatomComponent(({ ctx }) => {
-  const isOpen = ctx.spy(isCartOpenAtom);
-  const items = ctx.spy(cartItemsAtom);
-  const totalItems = ctx.spy(totalItemsAtom);
-  const totalPrice = ctx.spy(totalPriceAtom);
+export const CartDrawer = reatomComponent(() => {
+  const isOpen = isCartOpenAtom();
+  const items = cartItemsAtom();
+  const totalItems = totalItemsAtom();
+  const totalPrice = totalPriceAtom();
 
   return (
-    <Sheet open={isOpen} onOpenChange={(open) => isCartOpenAtom(ctx, open)}>
+    <Sheet open={isOpen} onOpenChange={wrap((open) => isCartOpenAtom.set(open))}>
       <SheetContent className="flex flex-col w-full sm:max-w-md">
         <SheetHeader>
           <SheetTitle>Your Cart ({totalItems})</SheetTitle>
@@ -520,7 +565,7 @@ export const CartDrawer = reatomComponent(({ ctx }) => {
                 <span>${totalPrice.toFixed(2)}</span>
               </div>
               <Button className="w-full" asChild>
-                <Link to="/cart" onClick={() => isCartOpenAtom(ctx, false)}>
+                <Link to="/cart" onClick={wrap(() => isCartOpenAtom.set(false))}>
                   View Cart
                 </Link>
               </Button>
@@ -532,6 +577,8 @@ export const CartDrawer = reatomComponent(({ ctx }) => {
   );
 }, 'CartDrawer');
 ```
+
+**Изменения vs v3:** `({ ctx })` → `()`, `ctx.spy(atom)` → `atom()`, `isCartOpenAtom(ctx, open)` → `wrap((open) => isCartOpenAtom.set(open))`.
 
 - [ ] **Step 4: Run to verify pass**
 
@@ -591,22 +638,22 @@ describe('CartPage', () => {
   });
 
   it('shows cart item when product in cart', () => {
-    const { ctx } = renderWithReatom(<CartPage />);
-    addItem(ctx, mockProduct);
+    const { frame } = renderWithReatom(<CartPage />);
+    frame.run(() => addItem(mockProduct));
     expect(screen.getByText('Test Product')).toBeInTheDocument();
   });
 
   it('shows total price', () => {
-    const { ctx } = renderWithReatom(<CartPage />);
-    addItem(ctx, mockProduct);
+    const { frame } = renderWithReatom(<CartPage />);
+    frame.run(() => addItem(mockProduct));
     expect(screen.getByText('$50.00')).toBeInTheDocument();
   });
 
   it('clears cart on Clear Cart click', async () => {
-    const { ctx } = renderWithReatom(<CartPage />);
-    addItem(ctx, mockProduct);
+    const { frame } = renderWithReatom(<CartPage />);
+    frame.run(() => addItem(mockProduct));
     await userEvent.click(screen.getByRole('button', { name: /clear cart/i }));
-    expect(ctx.get(cartItemsAtom)).toHaveLength(0);
+    frame.run(() => expect(cartItemsAtom()).toHaveLength(0));
   });
 });
 ```
@@ -625,15 +672,16 @@ Replace `experiments/catalog-reatom/src/features/cart/CartPage.tsx`:
 
 ```tsx
 import { Link } from 'react-router-dom';
-import { reatomComponent } from '@reatom/npm-react';
+import { wrap } from '@reatom/core';
+import { reatomComponent } from '@reatom/react';
 import { Button } from '@/components/ui/button';
 import { cartItemsAtom, totalItemsAtom, totalPriceAtom, clearCart } from './atoms';
 import { CartItem } from './components/CartItem';
 
-export const CartPage = reatomComponent(({ ctx }) => {
-  const items = ctx.spy(cartItemsAtom);
-  const totalItems = ctx.spy(totalItemsAtom);
-  const totalPrice = ctx.spy(totalPriceAtom);
+export const CartPage = reatomComponent(() => {
+  const items = cartItemsAtom();
+  const totalItems = totalItemsAtom();
+  const totalPrice = totalPriceAtom();
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -658,7 +706,7 @@ export const CartPage = reatomComponent(({ ctx }) => {
               <p className="text-2xl font-bold">${totalPrice.toFixed(2)}</p>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => clearCart(ctx)}>
+              <Button variant="outline" onClick={wrap(clearCart)}>
                 Clear Cart
               </Button>
               <Button asChild>
@@ -672,6 +720,8 @@ export const CartPage = reatomComponent(({ ctx }) => {
   );
 }, 'CartPage');
 ```
+
+**Изменения vs v3:** `({ ctx })` → `()`, `ctx.spy(atom)` → `atom()`, `clearCart(ctx)` → `wrap(clearCart)`.
 
 - [ ] **Step 4: Run to verify pass**
 
@@ -703,13 +753,14 @@ Replace `experiments/catalog-reatom/src/components/Layout.tsx`:
 ```tsx
 import { Link, Outlet } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
-import { reatomComponent } from '@reatom/npm-react';
+import { wrap } from '@reatom/core';
+import { reatomComponent } from '@reatom/react';
 import { Button } from '@/components/ui/button';
 import { CartDrawer } from '@/features/cart/components/CartDrawer';
 import { totalItemsAtom, isCartOpenAtom } from '@/features/cart/atoms';
 
-export const Layout = reatomComponent(({ ctx }) => {
-  const totalItems = ctx.spy(totalItemsAtom);
+export const Layout = reatomComponent(() => {
+  const totalItems = totalItemsAtom();
 
   return (
     <div className="min-h-screen bg-background">
@@ -722,7 +773,7 @@ export const Layout = reatomComponent(({ ctx }) => {
             variant="ghost"
             size="icon"
             className="relative"
-            onClick={() => isCartOpenAtom(ctx, true)}
+            onClick={wrap(() => isCartOpenAtom.set(true))}
             aria-label="Cart"
           >
             <ShoppingCart className="h-5 w-5" />
@@ -742,6 +793,8 @@ export const Layout = reatomComponent(({ ctx }) => {
   );
 }, 'Layout');
 ```
+
+**Изменения vs v3:** `({ ctx })` → `()`, `ctx.spy(totalItemsAtom)` → `totalItemsAtom()`, `isCartOpenAtom(ctx, true)` → `wrap(() => isCartOpenAtom.set(true))`.
 
 - [ ] **Step 2: Update App.tsx import**
 
@@ -780,14 +833,16 @@ import { cartItemsAtom } from '@/features/cart/atoms';
 import { mockProduct } from '@/mocks/handlers';
 
 it('Add to Cart button adds product to cart', async () => {
-  const { ctx } = renderWithReatom(<ProductCard product={mockProduct} />);
+  const { frame } = renderWithReatom(<ProductCard product={mockProduct} />);
   await userEvent.click(screen.getByRole('button', { name: /add to cart/i }));
-  expect(ctx.get(cartItemsAtom)).toHaveLength(1);
-  expect(ctx.get(cartItemsAtom)[0].product.id).toBe(mockProduct.id);
+  frame.run(() => {
+    expect(cartItemsAtom()).toHaveLength(1);
+    expect(cartItemsAtom()[0].product.id).toBe(mockProduct.id);
+  });
 });
 
 it('Add to Cart button shows "In Cart" after adding', async () => {
-  const { ctx } = renderWithReatom(<ProductCard product={mockProduct} />);
+  renderWithReatom(<ProductCard product={mockProduct} />);
   await userEvent.click(screen.getByRole('button', { name: /add to cart/i }));
   expect(screen.getByRole('button', { name: /in cart/i })).toBeInTheDocument();
 });
@@ -807,13 +862,14 @@ Replace `experiments/catalog-reatom/src/features/products/components/ProductCard
 
 ```tsx
 import { Link } from 'react-router-dom';
-import { reatomComponent } from '@reatom/npm-react';
+import { wrap } from '@reatom/core';
+import { reatomComponent } from '@reatom/react';
 import { Button } from '@/components/ui/button';
 import { cartItemsAtom, addItem } from '@/features/cart/atoms';
 import type { Product } from '../types';
 
-export const ProductCard = reatomComponent<{ product: Product }>(({ ctx, product }) => {
-  const isInCart = ctx.spy(cartItemsAtom).some((i) => i.product.id === product.id);
+export const ProductCard = reatomComponent<{ product: Product }>(({ product }) => {
+  const isInCart = cartItemsAtom().some((i) => i.product.id === product.id);
 
   return (
     <div className="rounded-lg border bg-card flex flex-col">
@@ -839,10 +895,10 @@ export const ProductCard = reatomComponent<{ product: Product }>(({ ctx, product
           size="sm"
           className="mt-3 w-full"
           variant={isInCart ? 'secondary' : 'default'}
-          onClick={(e) => {
+          onClick={wrap((e) => {
             e.preventDefault();
-            addItem(ctx, product);
-          }}
+            addItem(product);
+          })}
         >
           {isInCart ? 'In Cart' : 'Add to Cart'}
         </Button>
@@ -851,6 +907,8 @@ export const ProductCard = reatomComponent<{ product: Product }>(({ ctx, product
   );
 }, 'ProductCard');
 ```
+
+**Изменения vs v3:** `ctx.spy(cartItemsAtom)` → `cartItemsAtom()`, `addItem(ctx, product)` → `addItem(product)`, onClick обёрнут в `wrap()`.
 
 - [ ] **Step 4: Run ProductCard tests to verify pass**
 
@@ -868,13 +926,13 @@ Append to `experiments/catalog-reatom/src/features/products/ProductDetailPage.te
 import { cartItemsAtom } from '@/features/cart/atoms';
 
 it('Add to Cart button adds product to cart', async () => {
-  const { ctx } = renderWithReatom(<ProductDetailPage />, {
+  const { frame } = renderWithReatom(<ProductDetailPage />, {
     route: '/products/1',
     routePath: '/products/:id',
   });
   await waitFor(() => screen.getByRole('button', { name: /add to cart/i }));
   await userEvent.click(screen.getByRole('button', { name: /add to cart/i }));
-  expect(ctx.get(cartItemsAtom)).toHaveLength(1);
+  frame.run(() => expect(cartItemsAtom()).toHaveLength(1));
 });
 ```
 
@@ -890,12 +948,17 @@ Expected: FAIL — button is disabled.
 
 In `experiments/catalog-reatom/src/features/products/ProductDetailPage.tsx`:
 
-Add to imports: `import { addItem } from '@/features/cart/atoms';`
+Add to imports:
+
+```tsx
+import { wrap } from '@reatom/core';
+import { addItem } from '@/features/cart/atoms';
+```
 
 Replace `{/* Add to Cart wired in Iteration 3 */}` comment with:
 
 ```tsx
-<Button className="flex-1" onClick={() => product && addItem(ctx, product)}>
+<Button className="flex-1" onClick={wrap(() => product && addItem(product))}>
   Add to Cart
 </Button>
 ```
@@ -934,20 +997,22 @@ Update `experiments/catalog-reatom/README.md` with status `complete` and conclus
 ```markdown
 # catalog-reatom
 
-| Field    | Value                                                                                                                                         |
-| -------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Template | react-full                                                                                                                                    |
-| Created  | 2026-04-14                                                                                                                                    |
-| Status   | complete                                                                                                                                      |
-| Goal     | Port catalog-zustand to idiomatic Reatom v3: reatomAsync/reatomResource for server state, atoms for client state, reatomComponent throughout. |
+| Field    | Value                                                                                                                                        |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Template | react-full                                                                                                                                   |
+| Created  | 2026-04-14                                                                                                                                   |
+| Status   | complete                                                                                                                                     |
+| Goal     | Port catalog-zustand to idiomatic Reatom v1000: computed+withAsyncData для server state, atoms для client state, reatomComponent throughout. |
 
 ## Выводы
 
-- `reatomResource` — прямой аналог `useQuery` с реактивными зависимостями через `ctx.spy`. При смене фильтра ресурс пересчитывается автоматически — не нужны query keys.
-- `reatomComponent` — компонент с fine-grained подписками. Не нужны `useMemo`/`useCallback`/селекторы. Re-render только при изменении конкретно тех атомов, которые spy-тся.
-- `withLocalStorage` — однострочная персистентность вместо middleware Zustand.
-- Мутации как `action` — явные, без магии. Optimistic update = прямая запись в `dataAtom`; rollback = re-bump refresh atom.
-- Boilerplate: больше, чем в Zustand (нужен ctx везде), но логика более предсказуема и тестируема изолированно.
+- `computed(async () => { dep() }) + withAsyncData` — прямой аналог `reatomResource + withDataAtom/withErrorAtom/withStatusesAtom` из v3. Реактивность та же: смена зависимости пересчитывает ресурс автоматически.
+- `reatomComponent` — компонент без `ctx`-пропса. Атомы читаются вызовом `atom()`, fine-grained подписки. Re-render только при изменении конкретно тех атомов, которые вызывались в рендере.
+- `withLocalStorage` переехал из `@reatom/persist-web-storage` прямо в `@reatom/core`. Синтаксис сменился с `.pipe()` на `.extend()`.
+- `computed(...)` — отдельная функция вместо `atom((ctx) => ctx.spy(...))`. Читаемее, типобезопасность лучше.
+- Обработчики событий требуют `wrap()` для сохранения реактивного контекста. Альтернатива — `useAction()` для стабильных ссылок.
+- Тесты: `createCtx()` → `context.start()`, операции в `frame.run()`. Немного многословнее, зато изоляция явная.
+- Boilerplate: `ctx` ушёл из аргументов — код компонентов и экшенов значительно чище.
 ```
 
 - [ ] **Step 3: Final commit**

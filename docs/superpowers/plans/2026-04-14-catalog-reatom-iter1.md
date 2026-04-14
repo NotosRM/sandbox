@@ -2,39 +2,39 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Create `catalog-reatom` experiment with Reatom v3; build a browsable, filterable, searchable product catalog with detail page — no mutations, no cart.
+**Goal:** Create `catalog-reatom` experiment with Reatom v1000; build a browsable, filterable, searchable product catalog with detail page — no mutations, no cart.
 
-**Architecture:** Fresh `react-full` experiment. Non-state files copied from `catalog-zustand`. `reatomResource` for reactive data fetching (auto-refetches when filter atoms change). `reatomComponent` for all state-reading components. Filter state (page, search, category) lives in module-scoped atoms.
+**Architecture:** Fresh `react-full` experiment. Non-state files copied from `catalog-zustand`. `computed` + `withAsyncData` for reactive data fetching (auto-refetches when filter atoms change). `reatomComponent` for all state-reading components. Filter state (page, search, category) lives in module-scoped atoms.
 
-**Tech Stack:** `@reatom/core`, `@reatom/async` (reatomResource), `@reatom/npm-react` (reatomComponent), react-router-dom v7, shadcn/ui, Vitest + RTL + MSW
+**Tech Stack:** `@reatom/core` (atom, computed, wrap, withAsyncData, withLocalStorage), `@reatom/react` (reatomComponent, reatomContext), react-router-dom v7, shadcn/ui, Vitest + RTL + MSW
 
 ---
 
 ## File Map
 
-| File                                                       | Action        | Responsibility                                           |
-| ---------------------------------------------------------- | ------------- | -------------------------------------------------------- |
-| `package.json`                                             | create/modify | Reatom deps, no tanstack/zustand/axios                   |
-| `src/test-setup.ts`                                        | create        | jest-dom + MSW server lifecycle                          |
-| `src/test/server.ts`                                       | create        | MSW node server                                          |
-| `src/test/utils.tsx`                                       | create        | `renderWithReatom` helper                                |
-| `src/main.tsx`                                             | create        | `createCtx()` + `ReatomContext.Provider`                 |
-| `src/App.tsx`                                              | create        | Router (no QueryClientProvider)                          |
-| `src/components/Layout.tsx`                                | create        | Header + Outlet, stubbed cart badge                      |
-| `src/lib/dummyjson.ts`                                     | copy          | Fetch client, unchanged                                  |
-| `src/features/products/types.ts`                           | copy          | Product/Category types, unchanged                        |
-| `src/mocks/handlers.ts`                                    | copy          | MSW handlers, unchanged                                  |
-| `src/features/products/atoms.ts`                           | create        | Filter atoms + reatomResource for list/categories/detail |
-| `src/features/products/atoms.test.ts`                      | create        | Unit tests for atom initial values + mutations           |
-| `src/features/products/components/ProductCard.tsx`         | create        | reatomComponent, Add to Cart stubbed                     |
-| `src/features/products/components/ProductCard.test.tsx`    | create        | Renders title, price, link                               |
-| `src/features/products/components/ProductFilters.tsx`      | create        | reatomComponent, debounced search + category buttons     |
-| `src/features/products/components/ProductFilters.test.tsx` | create        | Updates atoms on interaction                             |
-| `src/features/products/ProductsPage.tsx`                   | create        | reatomComponent, grid + pagination                       |
-| `src/features/products/ProductsPage.test.tsx`              | create        | Shows products from MSW                                  |
-| `src/features/products/ProductDetailPage.tsx`              | create        | reatomComponent, product detail view                     |
-| `src/features/products/ProductDetailPage.test.tsx`         | create        | Shows product fields from MSW                            |
-| `src/features/cart/CartPage.tsx`                           | create        | Placeholder for route                                    |
+| File                                                       | Action        | Responsibility                                                   |
+| ---------------------------------------------------------- | ------------- | ---------------------------------------------------------------- |
+| `package.json`                                             | create/modify | Reatom deps, no tanstack/zustand/axios                           |
+| `src/test-setup.ts`                                        | create        | jest-dom + MSW server lifecycle                                  |
+| `src/test/server.ts`                                       | create        | MSW node server                                                  |
+| `src/test/utils.tsx`                                       | create        | `renderWithReatom` helper                                        |
+| `src/main.tsx`                                             | create        | `clearStack()` + `context.start()` + `reatomContext.Provider`    |
+| `src/App.tsx`                                              | create        | Router (no QueryClientProvider)                                  |
+| `src/components/Layout.tsx`                                | create        | Header + Outlet, stubbed cart badge                              |
+| `src/lib/dummyjson.ts`                                     | copy          | Fetch client, unchanged                                          |
+| `src/features/products/types.ts`                           | copy          | Product/Category types, unchanged                                |
+| `src/mocks/handlers.ts`                                    | copy          | MSW handlers, unchanged                                          |
+| `src/features/products/atoms.ts`                           | create        | Filter atoms + computed+withAsyncData for list/categories/detail |
+| `src/features/products/atoms.test.ts`                      | create        | Unit tests for atom initial values + mutations                   |
+| `src/features/products/components/ProductCard.tsx`         | create        | reatomComponent, Add to Cart stubbed                             |
+| `src/features/products/components/ProductCard.test.tsx`    | create        | Renders title, price, link                                       |
+| `src/features/products/components/ProductFilters.tsx`      | create        | reatomComponent, debounced search + category buttons             |
+| `src/features/products/components/ProductFilters.test.tsx` | create        | Updates atoms on interaction                                     |
+| `src/features/products/ProductsPage.tsx`                   | create        | reatomComponent, grid + pagination                               |
+| `src/features/products/ProductsPage.test.tsx`              | create        | Shows products from MSW                                          |
+| `src/features/products/ProductDetailPage.tsx`              | create        | reatomComponent, product detail view                             |
+| `src/features/products/ProductDetailPage.test.tsx`         | create        | Shows product fields from MSW                                    |
+| `src/features/cart/CartPage.tsx`                           | create        | Placeholder for route                                            |
 
 ---
 
@@ -75,10 +75,8 @@ Write `experiments/catalog-reatom/package.json`:
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-slot": "^1.2.4",
-    "@reatom/async": "^3.9.0",
-    "@reatom/core": "^3.11.0",
-    "@reatom/npm-react": "^3.5.0",
-    "@reatom/persist-web-storage": "^3.3.0",
+    "@reatom/core": "^1000.0.0",
+    "@reatom/react": "^1000.0.0",
     "@sandbox/shared": "workspace:*",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
@@ -111,6 +109,8 @@ Write `experiments/catalog-reatom/package.json`:
 }
 ```
 
+**Изменения vs v3:** убраны `@reatom/async` и `@reatom/persist-web-storage` (оба вошли в `@reatom/core`); `@reatom/npm-react` → `@reatom/react`.
+
 - [ ] **Step 3: Copy vitest config and tsconfig from catalog-zustand**
 
 ```bash
@@ -128,13 +128,13 @@ cd d:/Projects/sandbox-notosrm
 pnpm install
 ```
 
-Expected: `catalog-reatom` workspace resolved, `@reatom/*` packages installed.
+Expected: `catalog-reatom` workspace resolved, `@reatom/core` и `@reatom/react` установлены.
 
 - [ ] **Step 5: Commit**
 
 ```bash
 rtk git add experiments/catalog-reatom/package.json experiments/catalog-reatom/vitest.config.ts experiments/catalog-reatom/tsconfig.json experiments/catalog-reatom/vite.config.ts experiments/catalog-reatom/components.json experiments/catalog-reatom/index.html pnpm-lock.yaml
-rtk git commit -m "feat(catalog-reatom): scaffold experiment with Reatom v3 dependencies"
+rtk git commit -m "feat(catalog-reatom): scaffold experiment with Reatom v1000 dependencies"
 ```
 
 ---
@@ -203,12 +203,15 @@ Create `experiments/catalog-reatom/src/test/utils.tsx`:
 ```tsx
 import { render, type RenderOptions } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import { createCtx } from '@reatom/core';
-import { ReatomContext } from '@reatom/npm-react';
-import type { Ctx } from '@reatom/core';
+import { context, clearStack } from '@reatom/core';
+import { reatomContext } from '@reatom/react';
+
+clearStack(); // отключаем дефолтный неявный контекст для тестов
+
+type Frame = ReturnType<typeof context.start>;
 
 interface RenderResult extends ReturnType<typeof render> {
-  ctx: Ctx;
+  frame: Frame;
 }
 
 interface Options extends Omit<RenderOptions, 'wrapper'> {
@@ -220,7 +223,7 @@ export function renderWithReatom(
   ui: React.ReactElement,
   { route = '/', routePath, ...options }: Options = {}
 ): RenderResult {
-  const ctx = createCtx();
+  const frame = context.start();
   const content = routePath ? (
     <Routes>
       <Route path={routePath} element={ui} />
@@ -229,14 +232,16 @@ export function renderWithReatom(
     ui
   );
   const result = render(
-    <ReatomContext.Provider value={ctx}>
+    <reatomContext.Provider value={frame}>
       <MemoryRouter initialEntries={[route]}>{content}</MemoryRouter>
-    </ReatomContext.Provider>,
+    </reatomContext.Provider>,
     options
   );
-  return { ...result, ctx };
+  return { ...result, frame };
 }
 ```
+
+**Изменения vs v3:** `createCtx()` → `context.start()`, `ReatomContext` → `reatomContext` из `@reatom/react`, возвращается `frame` вместо `ctx`. Проверка атомного состояния в тестах теперь через `frame.run(() => expect(atom()).toBe(...))`.
 
 - [ ] **Step 4: Commit**
 
@@ -261,12 +266,17 @@ Create `experiments/catalog-reatom/src/main.tsx`:
 ```tsx
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { createCtx } from '@reatom/core';
-import { ReatomContext } from '@reatom/npm-react';
+import { context, clearStack, connectLogger } from '@reatom/core';
+import { reatomContext } from '@reatom/react';
 import './globals.css';
 import App from './App';
 
-const ctx = createCtx();
+clearStack(); // отключаем дефолтный неявный стек контекста
+const rootFrame = context.start();
+
+if (import.meta.env.DEV) {
+  rootFrame.run(connectLogger);
+}
 
 if (import.meta.env.DEV) {
   const { setupMocks } = await import('@sandbox/shared/msw');
@@ -279,12 +289,14 @@ if (!root) throw new Error('Root element not found');
 
 createRoot(root).render(
   <StrictMode>
-    <ReatomContext.Provider value={ctx}>
+    <reatomContext.Provider value={rootFrame}>
       <App />
-    </ReatomContext.Provider>
+    </reatomContext.Provider>
   </StrictMode>
 );
 ```
+
+**Изменения vs v3:** `createCtx()` → `clearStack()` + `context.start()`, `ReatomContext` → `reatomContext`, добавлен `connectLogger` для DEV.
 
 - [ ] **Step 2: Write App.tsx**
 
@@ -369,7 +381,7 @@ rtk git commit -m "feat(catalog-reatom): add main.tsx ctx setup, App router, Lay
 Create `experiments/catalog-reatom/src/features/products/atoms.test.ts`:
 
 ```ts
-import { createCtx } from '@reatom/core';
+import { context } from '@reatom/core';
 import {
   pageAtom,
   searchAtom,
@@ -383,18 +395,24 @@ import {
 
 describe('filter atoms — defaults', () => {
   it('pageAtom defaults to 1', () => {
-    const ctx = createCtx();
-    expect(ctx.get(pageAtom)).toBe(1);
+    const frame = context.start();
+    frame.run(() => {
+      expect(pageAtom()).toBe(1);
+    });
   });
 
   it('searchAtom defaults to empty string', () => {
-    const ctx = createCtx();
-    expect(ctx.get(searchAtom)).toBe('');
+    const frame = context.start();
+    frame.run(() => {
+      expect(searchAtom()).toBe('');
+    });
   });
 
   it('categoryAtom defaults to empty string', () => {
-    const ctx = createCtx();
-    expect(ctx.get(categoryAtom)).toBe('');
+    const frame = context.start();
+    frame.run(() => {
+      expect(categoryAtom()).toBe('');
+    });
   });
 
   it('LIMIT is 12', () => {
@@ -404,46 +422,62 @@ describe('filter atoms — defaults', () => {
 
 describe('filter atoms — updates', () => {
   it('pageAtom can be set', () => {
-    const ctx = createCtx();
-    pageAtom(ctx, 5);
-    expect(ctx.get(pageAtom)).toBe(5);
+    const frame = context.start();
+    frame.run(() => {
+      pageAtom.set(5);
+      expect(pageAtom()).toBe(5);
+    });
   });
 
   it('searchAtom can be set', () => {
-    const ctx = createCtx();
-    searchAtom(ctx, 'phone');
-    expect(ctx.get(searchAtom)).toBe('phone');
+    const frame = context.start();
+    frame.run(() => {
+      searchAtom.set('phone');
+      expect(searchAtom()).toBe('phone');
+    });
   });
 
   it('categoryAtom can be set', () => {
-    const ctx = createCtx();
-    categoryAtom(ctx, 'electronics');
-    expect(ctx.get(categoryAtom)).toBe('electronics');
+    const frame = context.start();
+    frame.run(() => {
+      categoryAtom.set('electronics');
+      expect(categoryAtom()).toBe('electronics');
+    });
   });
 });
 
 describe('resource atoms — initial data', () => {
-  it('productsResource.dataAtom defaults to null', () => {
-    const ctx = createCtx();
-    expect(ctx.get(productsResource.dataAtom)).toBeNull();
+  it('productsResource.data() defaults to null', () => {
+    const frame = context.start();
+    frame.run(() => {
+      expect(productsResource.data()).toBeNull();
+    });
   });
 
-  it('categoriesResource.dataAtom defaults to empty array', () => {
-    const ctx = createCtx();
-    expect(ctx.get(categoriesResource.dataAtom)).toEqual([]);
+  it('categoriesResource.data() defaults to empty array', () => {
+    const frame = context.start();
+    frame.run(() => {
+      expect(categoriesResource.data()).toEqual([]);
+    });
   });
 
   it('productIdAtom defaults to 0', () => {
-    const ctx = createCtx();
-    expect(ctx.get(productIdAtom)).toBe(0);
+    const frame = context.start();
+    frame.run(() => {
+      expect(productIdAtom()).toBe(0);
+    });
   });
 
-  it('productResource.dataAtom defaults to null', () => {
-    const ctx = createCtx();
-    expect(ctx.get(productResource.dataAtom)).toBeNull();
+  it('productResource.data() defaults to null', () => {
+    const frame = context.start();
+    frame.run(() => {
+      expect(productResource.data()).toBeNull();
+    });
   });
 });
 ```
+
+**Изменения vs v3:** `createCtx()` → `context.start()`, все операции в `frame.run()`, `ctx.get(atom)` → `atom()`, `atom(ctx, value)` → `atom.set(value)`, `resource.dataAtom` → `resource.data()`.
 
 - [ ] **Step 2: Run to verify failure**
 
@@ -458,8 +492,8 @@ Expected: FAIL — `./atoms` not found.
 Create `experiments/catalog-reatom/src/features/products/atoms.ts`:
 
 ```ts
-import { atom } from '@reatom/core';
-import { reatomResource, withDataAtom, withErrorAtom, withStatusesAtom } from '@reatom/async';
+import { atom, computed, wrap } from '@reatom/core';
+import { withAsyncData } from '@reatom/core';
 import { fetchProducts, fetchCategories, fetchProduct } from '@/lib/dummyjson';
 
 export const LIMIT = 12;
@@ -472,29 +506,31 @@ export const categoryAtom = atom('', 'categoryAtom');
 
 // ─── Products list (reactive: re-fetches when any filter atom changes) ────────
 
-export const productsResource = reatomResource(async (ctx) => {
-  const page = ctx.spy(pageAtom);
-  const search = ctx.spy(searchAtom);
-  const category = ctx.spy(categoryAtom);
-  return await fetchProducts({ page, limit: LIMIT, search, category });
-}, 'productsResource').pipe(withDataAtom(null), withErrorAtom(), withStatusesAtom());
+export const productsResource = computed(async () => {
+  const page = pageAtom();
+  const search = searchAtom();
+  const category = categoryAtom();
+  return await wrap(fetchProducts({ page, limit: LIMIT, search, category }));
+}, 'productsResource').extend(withAsyncData({ initState: null, status: true }));
 
 // ─── Categories (fetched once, no deps) ──────────────────────────────────────
 
-export const categoriesResource = reatomResource(async (_ctx) => {
-  return await fetchCategories();
-}, 'categoriesResource').pipe(withDataAtom([]));
+export const categoriesResource = computed(async () => {
+  return await wrap(fetchCategories());
+}, 'categoriesResource').extend(withAsyncData({ initState: [] }));
 
 // ─── Product detail ───────────────────────────────────────────────────────────
 
 export const productIdAtom = atom(0, 'productIdAtom');
 
-export const productResource = reatomResource(async (ctx) => {
-  const id = ctx.spy(productIdAtom);
+export const productResource = computed(async () => {
+  const id = productIdAtom();
   if (!id) return null;
-  return await fetchProduct(id);
-}, 'productResource').pipe(withDataAtom(null), withErrorAtom(), withStatusesAtom());
+  return await wrap(fetchProduct(id));
+}, 'productResource').extend(withAsyncData({ initState: null, status: true }));
 ```
+
+**Изменения vs v3:** `reatomResource(async (ctx) => { ctx.spy(atom) })` → `computed(async () => { atom() })`, `.pipe(withDataAtom(null), withErrorAtom(), withStatusesAtom())` → `.extend(withAsyncData({ initState: null, status: true }))`, все `await` обёрнуты в `wrap()`. Импорт `@reatom/async` убран — всё из `@reatom/core`.
 
 - [ ] **Step 4: Run to verify pass**
 
@@ -508,7 +544,7 @@ Expected: PASS — 11 tests.
 
 ```bash
 rtk git add experiments/catalog-reatom/src/features/products/atoms.ts experiments/catalog-reatom/src/features/products/atoms.test.ts
-rtk git commit -m "feat(catalog-reatom): add product filter atoms and reatomResource"
+rtk git commit -m "feat(catalog-reatom): add product filter atoms and computed+withAsyncData resources"
 ```
 
 ---
@@ -569,12 +605,12 @@ Create `experiments/catalog-reatom/src/features/products/components/ProductCard.
 
 ```tsx
 import { Link } from 'react-router-dom';
-import { reatomComponent } from '@reatom/npm-react';
+import { reatomComponent } from '@reatom/react';
 import { Button } from '@/components/ui/button';
 import type { Product } from '../types';
 
 export const ProductCard = reatomComponent<{ product: Product }>(
-  ({ ctx: _ctx, product }) => (
+  ({ product }) => (
     <div className="rounded-lg border bg-card flex flex-col">
       <Link to={`/products/${product.id}`} className="block">
         <img
@@ -604,6 +640,8 @@ export const ProductCard = reatomComponent<{ product: Product }>(
   'ProductCard'
 );
 ```
+
+**Изменения vs v3:** убран `ctx` из пропсов (`({ ctx: _ctx, product })` → `({ product })`), импорт из `@reatom/react` вместо `@reatom/npm-react`.
 
 - [ ] **Step 4: Run to verify pass**
 
@@ -648,18 +686,18 @@ describe('ProductFilters', () => {
   });
 
   it('updates searchAtom after debounce', async () => {
-    const { ctx } = renderWithReatom(<ProductFilters />);
+    const { frame } = renderWithReatom(<ProductFilters />);
     const user = userEvent.setup({ delay: null });
     await user.type(screen.getByPlaceholderText(/search/i), 'phone');
-    await waitFor(() => expect(ctx.get(searchAtom)).toBe('phone'), { timeout: 1000 });
+    await waitFor(() => frame.run(() => expect(searchAtom()).toBe('phone')), { timeout: 1000 });
   });
 
   it('resets pageAtom to 1 when search changes', async () => {
-    const { ctx } = renderWithReatom(<ProductFilters />);
-    pageAtom(ctx, 3);
+    const { frame } = renderWithReatom(<ProductFilters />);
+    frame.run(() => pageAtom.set(3));
     const user = userEvent.setup({ delay: null });
     await user.type(screen.getByPlaceholderText(/search/i), 'x');
-    await waitFor(() => expect(ctx.get(pageAtom)).toBe(1), { timeout: 1000 });
+    await waitFor(() => frame.run(() => expect(pageAtom()).toBe(1)), { timeout: 1000 });
   });
 
   it('shows category buttons from categoriesResource', async () => {
@@ -670,10 +708,10 @@ describe('ProductFilters', () => {
   });
 
   it('updates categoryAtom on category click', async () => {
-    const { ctx } = renderWithReatom(<ProductFilters />);
+    const { frame } = renderWithReatom(<ProductFilters />);
     await waitFor(() => screen.getByRole('button', { name: mockCategories[0].name }));
     await userEvent.click(screen.getByRole('button', { name: mockCategories[0].name }));
-    expect(ctx.get(categoryAtom)).toBe(mockCategories[0].slug);
+    frame.run(() => expect(categoryAtom()).toBe(mockCategories[0].slug));
   });
 });
 ```
@@ -692,36 +730,32 @@ Create `experiments/catalog-reatom/src/features/products/components/ProductFilte
 
 ```tsx
 import { useEffect, useState } from 'react';
-import { reatomComponent } from '@reatom/npm-react';
+import { wrap } from '@reatom/core';
+import { reatomComponent } from '@reatom/react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { searchAtom, categoryAtom, pageAtom, categoriesResource } from '../atoms';
 
-export const ProductFilters = reatomComponent(({ ctx }) => {
-  const category = ctx.spy(categoryAtom);
-  const categories = ctx.spy(categoriesResource.dataAtom);
-  const currentSearch = ctx.spy(searchAtom);
+export const ProductFilters = reatomComponent(() => {
+  const category = categoryAtom();
+  const categories = categoriesResource.data();
+  const currentSearch = searchAtom();
 
   const [inputValue, setInputValue] = useState(currentSearch);
 
   // Debounce: write to searchAtom 400ms after typing stops
   useEffect(() => {
     const timer = setTimeout(() => {
-      searchAtom(ctx, inputValue);
-      pageAtom(ctx, 1);
+      searchAtom.set(inputValue);
+      pageAtom.set(1);
     }, 400);
     return () => clearTimeout(timer);
-  }, [ctx, inputValue]);
+  }, [inputValue]);
 
   // Sync input when searchAtom is cleared externally
   useEffect(() => {
     if (currentSearch === '') setInputValue('');
   }, [currentSearch]);
-
-  function handleCategoryClick(slug: string) {
-    categoryAtom(ctx, slug);
-    pageAtom(ctx, 1);
-  }
 
   return (
     <div className="flex flex-col gap-4 mb-6">
@@ -735,7 +769,10 @@ export const ProductFilters = reatomComponent(({ ctx }) => {
         <Button
           variant={category === '' ? 'default' : 'outline'}
           size="sm"
-          onClick={() => handleCategoryClick('')}
+          onClick={wrap(() => {
+            categoryAtom.set('');
+            pageAtom.set(1);
+          })}
         >
           All
         </Button>
@@ -744,7 +781,10 @@ export const ProductFilters = reatomComponent(({ ctx }) => {
             key={cat.slug}
             variant={category === cat.slug ? 'default' : 'outline'}
             size="sm"
-            onClick={() => handleCategoryClick(cat.slug)}
+            onClick={wrap(() => {
+              categoryAtom.set(cat.slug);
+              pageAtom.set(1);
+            })}
           >
             {cat.name}
           </Button>
@@ -754,6 +794,8 @@ export const ProductFilters = reatomComponent(({ ctx }) => {
   );
 }, 'ProductFilters');
 ```
+
+**Изменения vs v3:** `({ ctx })` → `()`, `ctx.spy(atom)` → `atom()`, `atom(ctx, value)` → `atom.set(value)`, onClick обёрнуты в `wrap()`. `useEffect` остаётся (стандартный React hook, работает в `reatomComponent`). Прямые сеттеры внутри `useEffect` не требуют `wrap()` т.к. работают в синхронном контексте таймера.
 
 - [ ] **Step 4: Run to verify pass**
 
@@ -836,17 +878,18 @@ Expected: FAIL — `./ProductsPage` not found.
 Create `experiments/catalog-reatom/src/features/products/ProductsPage.tsx`:
 
 ```tsx
-import { reatomComponent } from '@reatom/npm-react';
+import { wrap } from '@reatom/core';
+import { reatomComponent } from '@reatom/react';
 import { Button } from '@/components/ui/button';
 import { ProductCard } from './components/ProductCard';
 import { ProductFilters } from './components/ProductFilters';
 import { productsResource, pageAtom, LIMIT } from './atoms';
 
-export const ProductsPage = reatomComponent(({ ctx }) => {
-  const data = ctx.spy(productsResource.dataAtom);
-  const { isPending } = ctx.spy(productsResource.statusesAtom);
-  const error = ctx.spy(productsResource.errorAtom);
-  const page = ctx.spy(pageAtom);
+export const ProductsPage = reatomComponent(() => {
+  const data = productsResource.data();
+  const { isPending } = productsResource.status();
+  const error = productsResource.error();
+  const page = pageAtom();
   const totalPages = data ? Math.ceil(data.total / LIMIT) : 0;
 
   if (error) {
@@ -878,7 +921,7 @@ export const ProductsPage = reatomComponent(({ ctx }) => {
               <Button
                 variant="outline"
                 disabled={page === 1}
-                onClick={() => pageAtom(ctx, page - 1)}
+                onClick={wrap(() => pageAtom.set(page - 1))}
               >
                 Previous
               </Button>
@@ -888,7 +931,7 @@ export const ProductsPage = reatomComponent(({ ctx }) => {
               <Button
                 variant="outline"
                 disabled={page === totalPages}
-                onClick={() => pageAtom(ctx, page + 1)}
+                onClick={wrap(() => pageAtom.set(page + 1))}
               >
                 Next
               </Button>
@@ -900,6 +943,8 @@ export const ProductsPage = reatomComponent(({ ctx }) => {
   );
 }, 'ProductsPage');
 ```
+
+**Изменения vs v3:** `({ ctx })` → `()`, `ctx.spy(productsResource.dataAtom)` → `productsResource.data()`, `ctx.spy(productsResource.statusesAtom)` → `productsResource.status()`, `ctx.spy(productsResource.errorAtom)` → `productsResource.error()`, `pageAtom(ctx, ...)` → `wrap(() => pageAtom.set(...))`.
 
 - [ ] **Step 4: Run to verify pass**
 
@@ -986,24 +1031,24 @@ Create `experiments/catalog-reatom/src/features/products/ProductDetailPage.tsx`:
 ```tsx
 import { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { reatomComponent } from '@reatom/npm-react';
+import { reatomComponent } from '@reatom/react';
 import { Button } from '@/components/ui/button';
 import { productResource, productIdAtom } from './atoms';
 
-export const ProductDetailPage = reatomComponent(({ ctx }) => {
+export const ProductDetailPage = reatomComponent(() => {
   const { id } = useParams<{ id: string }>();
   const productId = Number(id ?? 0);
 
   useEffect(() => {
-    productIdAtom(ctx, productId);
+    productIdAtom.set(productId);
     return () => {
-      productIdAtom(ctx, 0);
+      productIdAtom.set(0);
     };
-  }, [ctx, productId]);
+  }, [productId]);
 
-  const product = ctx.spy(productResource.dataAtom);
-  const { isPending } = ctx.spy(productResource.statusesAtom);
-  const error = ctx.spy(productResource.errorAtom);
+  const product = productResource.data();
+  const { isPending } = productResource.status();
+  const error = productResource.error();
 
   if (isPending && !product) return <p className="text-muted-foreground">Loading...</p>;
   if (error || !product) return <p className="text-destructive">Product not found.</p>;
@@ -1074,6 +1119,8 @@ export const ProductDetailPage = reatomComponent(({ ctx }) => {
 }, 'ProductDetailPage');
 ```
 
+**Изменения vs v3:** `({ ctx })` → `()`, `productIdAtom(ctx, productId)` → `productIdAtom.set(productId)`, `ctx.spy(productResource.dataAtom)` → `productResource.data()`, `ctx.spy(productResource.statusesAtom)` → `productResource.status()`, `ctx.spy(productResource.errorAtom)` → `productResource.error()`. `useEffect` без `ctx` в deps.
+
 - [ ] **Step 4: Run to verify pass**
 
 ```bash
@@ -1129,5 +1176,5 @@ Expected: All tests pass.
 
 ```bash
 rtk git add experiments/catalog-reatom/src/features/cart/CartPage.tsx
-rtk git commit -m "feat(catalog-reatom): iter1 complete — read-only catalog with Reatom v3"
+rtk git commit -m "feat(catalog-reatom): iter1 complete — read-only catalog with Reatom v1000"
 ```

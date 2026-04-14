@@ -12,6 +12,7 @@ import {
   productsRefreshAtom,
   isProductFormOpenAtom,
   editingProductIdAtom,
+  formProductResource,
   openCreateForm,
   openEditForm,
   closeForm,
@@ -108,6 +109,13 @@ describe('resource atoms — initial data', () => {
     const frame = context.start();
     frame.run(() => {
       expect(productResource.data()).toBeNull();
+    });
+  });
+
+  it('formProductResource.data() defaults to null when editingProductIdAtom is null', () => {
+    const frame = context.start();
+    frame.run(() => {
+      expect(formProductResource.data()).toBeNull();
     });
   });
 });

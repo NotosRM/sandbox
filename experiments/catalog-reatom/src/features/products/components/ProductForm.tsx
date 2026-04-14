@@ -1,8 +1,8 @@
-import { useContext, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { wrap } from '@reatom/core';
-import { reatomComponent, reatomContext } from '@reatom/react';
+import { reatomComponent } from '@reatom/react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,26 +14,17 @@ import {
   closeForm,
   createProductAction,
   updateProductAction,
-  productResource,
-  productIdAtom,
+  formProductResource,
   productSchema,
   type ProductFormData,
 } from '../atoms';
 
 export const ProductForm = reatomComponent(() => {
-  const frame = useContext(reatomContext)!;
   const isOpen = isProductFormOpenAtom();
   const editingId = editingProductIdAtom();
   const isEditMode = editingId !== null;
 
-  // When edit mode activates, set productIdAtom so productResource fetches the product
-  useEffect(() => {
-    if (isEditMode && editingId !== null) {
-      frame.run(() => productIdAtom.set(editingId));
-    }
-  }, [frame, isEditMode, editingId]);
-
-  const existingProduct = productResource.data();
+  const existingProduct = formProductResource.data();
 
   const {
     register,

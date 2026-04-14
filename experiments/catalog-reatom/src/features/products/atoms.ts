@@ -51,6 +51,14 @@ export const productResource = computed(async () => {
 export const isProductFormOpenAtom = atom(false, 'isProductFormOpenAtom');
 export const editingProductIdAtom = atom<number | null>(null, 'editingProductIdAtom');
 
+// ─── Form product resource (separate from detail page resource) ───────────────
+
+export const formProductResource = computed(async () => {
+  const id = editingProductIdAtom();
+  if (!id) return null;
+  return await wrap(fetchProduct(id));
+}, 'formProductResource').extend(withAsyncData({ initState: null, status: true }));
+
 export const openCreateForm = action(() => {
   isProductFormOpenAtom.set(true);
   editingProductIdAtom.set(null);

@@ -8,6 +8,12 @@ import {
   categoriesResource,
   productIdAtom,
   productResource,
+  productsRefreshAtom,
+  isProductFormOpenAtom,
+  editingProductIdAtom,
+  openCreateForm,
+  openEditForm,
+  closeForm,
 } from './atoms';
 
 describe('filter atoms — defaults', () => {
@@ -89,6 +95,67 @@ describe('resource atoms — initial data', () => {
     const frame = context.start();
     frame.run(() => {
       expect(productResource.data()).toBeNull();
+    });
+  });
+});
+
+describe('UI flag atoms', () => {
+  it('isProductFormOpenAtom defaults to false', () => {
+    const frame = context.start();
+    frame.run(() => {
+      expect(isProductFormOpenAtom()).toBe(false);
+    });
+  });
+
+  it('editingProductIdAtom defaults to null', () => {
+    const frame = context.start();
+    frame.run(() => {
+      expect(editingProductIdAtom()).toBeNull();
+    });
+  });
+
+  it('openCreateForm opens form with no editing ID', () => {
+    const frame = context.start();
+    frame.run(() => {
+      openCreateForm();
+      expect(isProductFormOpenAtom()).toBe(true);
+      expect(editingProductIdAtom()).toBeNull();
+    });
+  });
+
+  it('openEditForm opens form with product ID', () => {
+    const frame = context.start();
+    frame.run(() => {
+      openEditForm(42);
+      expect(isProductFormOpenAtom()).toBe(true);
+      expect(editingProductIdAtom()).toBe(42);
+    });
+  });
+
+  it('closeForm resets form state', () => {
+    const frame = context.start();
+    frame.run(() => {
+      openEditForm(42);
+      closeForm();
+      expect(isProductFormOpenAtom()).toBe(false);
+      expect(editingProductIdAtom()).toBeNull();
+    });
+  });
+});
+
+describe('productsRefreshAtom', () => {
+  it('defaults to 0', () => {
+    const frame = context.start();
+    frame.run(() => {
+      expect(productsRefreshAtom()).toBe(0);
+    });
+  });
+
+  it('increments when bumped', () => {
+    const frame = context.start();
+    frame.run(() => {
+      productsRefreshAtom.set((v: number) => v + 1);
+      expect(productsRefreshAtom()).toBe(1);
     });
   });
 });

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterEach, afterAll, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
@@ -6,12 +6,18 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createServer } from '@sandbox/shared/msw/node';
 import { createHandlers } from '@/mocks/handlers';
 import { ProductDetailPage } from './ProductDetailPage';
+import { useCartStore } from '@/features/cart/store';
 import type { ReactNode } from 'react';
 
 const server = createServer(...createHandlers('success'));
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
+
+beforeEach(() => {
+  useCartStore.setState({ items: [], isCartOpen: false, totalItems: 0, totalPrice: 0 });
+  localStorage.clear();
+});
 
 function Wrapper({ children }: { children: ReactNode }) {
   const qc = new QueryClient({
@@ -68,6 +74,15 @@ describe('ProductDetailPage', () => {
     render(<ProductDetailPage />, { wrapper: Wrapper });
     await waitFor(() => screen.getByRole('heading', { name: 'Test Product' }));
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
+  });
+
+  it('Add to Cart button adds product to cart store', async () => {
+    const user = userEvent.setup();
+    render(<ProductDetailPage />, { wrapper: Wrapper });
+    await waitFor(() => screen.getByRole('heading', { name: 'Test Product' }));
+    await user.click(screen.getByRole('button', { name: 'Add to Cart' }));
+    expect(useCartStore.getState().items).toHaveLength(1);
+    expect(useCartStore.getState().items[0].product.id).toBe(1);
   });
 
   it('clicking Delete calls mutation and navigates to /products', async () => {

@@ -2,6 +2,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useProduct, useDeleteProduct } from './api';
 import { Button } from '@/components/ui/button';
 import { useUIStore } from '@/features/ui/store';
+import { useCartStore } from '@/features/cart/store';
 import { ProductForm } from './components/ProductForm';
 
 export function ProductDetailPage() {
@@ -9,6 +10,7 @@ export function ProductDetailPage() {
   const { data: product, isLoading, isError } = useProduct(Number(id ?? 0));
   const navigate = useNavigate();
   const { openEditForm } = useUIStore();
+  const addItem = useCartStore((state) => state.addItem);
   const deleteMutation = useDeleteProduct();
 
   async function handleDelete() {
@@ -84,7 +86,9 @@ export function ProductDetailPage() {
             >
               Delete
             </Button>
-            <Button className="flex-1">Add to Cart</Button>
+            <Button className="flex-1" onClick={() => addItem(product)}>
+              Add to Cart
+            </Button>
           </div>
         </div>
       </div>

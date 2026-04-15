@@ -1,8 +1,10 @@
 import { useContext, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { wrap } from '@reatom/core';
 import { reatomComponent, reatomContext } from '@reatom/react';
 import { Button } from '@/components/ui/button';
 import { productResource, productIdAtom, openEditForm, deleteProductAction } from './atoms';
+import { addItem } from '@/features/cart/atoms';
 import { ProductForm } from './components/ProductForm';
 
 export const ProductDetailPage = reatomComponent(() => {
@@ -101,7 +103,7 @@ export const ProductDetailPage = reatomComponent(() => {
             >
               Delete
             </Button>
-            <Button className="flex-1" disabled>
+            <Button className="flex-1" onClick={wrap(() => product && addItem(product))}>
               Add to Cart
             </Button>
           </div>

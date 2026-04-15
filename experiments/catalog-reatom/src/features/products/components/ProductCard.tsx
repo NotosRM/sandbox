@@ -1,10 +1,14 @@
 import { Link } from 'react-router-dom';
+import { wrap } from '@reatom/core';
 import { reatomComponent } from '@reatom/react';
 import { Button } from '@/components/ui/button';
+import { cartItemsAtom, addItem } from '@/features/cart/atoms';
 import type { Product } from '../types';
 
-export const ProductCard = reatomComponent<{ product: Product }>(
-  ({ product }) => (
+export const ProductCard = reatomComponent<{ product: Product }>(({ product }) => {
+  const isInCart = cartItemsAtom().some((i) => i.product.id === product.id);
+
+  return (
     <div className="rounded-lg border bg-card flex flex-col">
       <Link to={`/products/${product.id}`} className="block">
         <img
@@ -24,12 +28,18 @@ export const ProductCard = reatomComponent<{ product: Product }>(
           <span className="font-bold">${product.price.toFixed(2)}</span>
           <span className="text-xs text-muted-foreground capitalize">{product.category}</span>
         </div>
-        {/* Add to Cart wired in Iteration 3 */}
-        <Button size="sm" className="mt-3 w-full" disabled>
-          Add to Cart
+        <Button
+          size="sm"
+          className="mt-3 w-full"
+          variant={isInCart ? 'secondary' : 'default'}
+          onClick={wrap((e) => {
+            e.preventDefault();
+            addItem(product);
+          })}
+        >
+          {isInCart ? 'In Cart' : 'Add to Cart'}
         </Button>
       </div>
     </div>
-  ),
-  'ProductCard'
-);
+  );
+}, 'ProductCard');

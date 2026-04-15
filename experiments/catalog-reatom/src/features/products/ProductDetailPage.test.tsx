@@ -1,8 +1,9 @@
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithReatom } from '@/test/utils';
 import { ProductDetailPage } from './ProductDetailPage';
 import { isProductFormOpenAtom, editingProductIdAtom } from './atoms';
+import { cartItemsAtom } from '@/features/cart/atoms';
 
 describe('ProductDetailPage', () => {
   it('shows loading initially', () => {
@@ -59,5 +60,16 @@ describe('ProductDetailPage', () => {
     });
     await waitFor(() => screen.getByRole('button', { name: /delete/i }));
     expect(screen.getByRole('button', { name: /delete/i })).not.toBeDisabled();
+  });
+
+  it('Add to Cart button adds product to cart', async () => {
+    const { frame } = renderWithReatom(<ProductDetailPage />, {
+      route: '/products/1',
+      routePath: '/products/:id',
+    });
+    await waitFor(() => screen.getByRole('button', { name: /add to cart/i }));
+    await userEvent.click(screen.getByRole('button', { name: /add to cart/i }));
+    await act(async () => {});
+    frame.run(() => expect(cartItemsAtom()).toHaveLength(1));
   });
 });

@@ -1,11 +1,13 @@
 import { useContext, useEffect, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { reatomComponent, reatomContext } from '@reatom/react';
 import { Button } from '@/components/ui/button';
-import { productResource, productIdAtom } from './atoms';
+import { productResource, productIdAtom, openEditForm, deleteProductAction } from './atoms';
+import { ProductForm } from './components/ProductForm';
 
 export const ProductDetailPage = reatomComponent(() => {
   const frame = useContext(reatomContext)!;
+  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const productId = Number(id ?? 0);
 
@@ -81,14 +83,31 @@ export const ProductDetailPage = reatomComponent(() => {
             <p>Rating: {product.rating} / 5</p>
           </div>
           <div className="flex gap-2 mt-6">
-            {/* Edit / Delete wired in Iteration 2 */}
-            {/* Add to Cart wired in Iteration 3 */}
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => frame.run(() => product && openEditForm(product.id))}
+            >
+              Edit
+            </Button>
+            <Button
+              variant="destructive"
+              className="flex-1"
+              onClick={async () => {
+                if (!product) return;
+                await frame.run(async () => deleteProductAction(product.id));
+                navigate('/products');
+              }}
+            >
+              Delete
+            </Button>
             <Button className="flex-1" disabled>
               Add to Cart
             </Button>
           </div>
         </div>
       </div>
+      <ProductForm />
     </div>
   );
 }, 'ProductDetailPage');

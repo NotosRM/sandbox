@@ -5,7 +5,27 @@
       "Bash(pnpm install:*)",
       "Bash(pnpm test:run)",
       "Bash(node -e \"const s = '{{ name }}'; console.log\\(s.includes\\('{{name}}'\\)\\);\")",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(pnpm test:run -- src/features/products/atoms.test.ts)",
+      "Bash(pnpm test:run -- src/features/products/components/ProductCard.test.tsx)",
+      "Bash(pnpm test:run -- src/features/products/ProductsPage.test.tsx)",
+      "Bash(pnpm test:run -- src/features/products/ProductDetailPage.test.tsx)",
+      "Bash(git -C /d/Projects/sandbox-notosrm diff b6e94ae 20da50d -- experiments/catalog-reatom/src/features/products/atoms.ts experiments/catalog-reatom/src/features/products/atoms.test.ts)",
+      "Bash(git -C /d/Projects/sandbox-notosrm log b6e94ae..20da50d --oneline)",
+      "Bash(node -e \"const pkg = require\\('./node_modules/@reatom/core/package.json'\\); console.log\\(pkg.version, pkg.exports ? Object.keys\\(pkg.exports\\) : 'no exports'\\)\")",
+      "Bash(python3 -c ':*)",
+      "Bash(node -e ':*)",
+      "Bash(awk '{print $1}')",
+      "Bash(pnpm --filter catalog-reatom test:run -- src/features/cart/atoms.test.ts)",
+      "Bash(ls /d/Projects/sandbox-notosrm/node_modules/.pnpm/@reatom+core@*/node_modules/@reatom/core/src/core/)",
+      "Bash(grep -rn \"withLocalStorage\" /d/Projects/sandbox-notosrm/experiments/catalog-reatom/node_modules/@reatom/core/build/*.d.ts)",
+      "Read(//c/Users/NotoS/AppData/Local/Temp/claude/d--Projects-sandbox-notosrm/3ba3e9d3-9469-46d2-a384-b9649b9e6525/tasks/**)",
+      "Bash(node -e \"const r = require\\('./experiments/catalog-reatom/node_modules/@reatom/core/dist/index.js'\\); console.log\\(typeof r.context, typeof r.withLocalStorage, typeof r.computed, typeof r.action\\)\")",
+      "Bash(node -e \"const r = require\\('./experiments/catalog-reatom/node_modules/@reatom/core/build/index.cjs'\\); console.log\\('withLocalStorage:', typeof r.withLocalStorage, '| context:', typeof r.context, '| computed:', typeof r.computed\\)\")",
+      "Bash(pnpm test:run -- src/features/cart/components/CartDrawer.test.tsx)",
+      "Bash(pnpm test:run -- src/features/cart/components/CartDrawer.test.tsx --reporter=verbose)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

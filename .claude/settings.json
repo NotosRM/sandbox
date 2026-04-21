@@ -25,7 +25,8 @@
       "Bash(pnpm test:run -- src/features/cart/components/CartDrawer.test.tsx)",
       "Bash(pnpm test:run -- src/features/cart/components/CartDrawer.test.tsx --reporter=verbose)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git config *)"
     ]
   }
 }
